@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCPCopy Animation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #eee;
+            padding-top: 50px;
+            position: relative;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 90%;
+            margin: 50px auto;
+            position: relative;
+        }
+        .box {
+            width: 250px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            position: relative;
+        }
+        .closed { background-color: gray; }
+        .syn-blue { background-color: #3498db; } 
+        .syn-ack-blue { background-color: #2c3e50; } 
+        .ack-blue { background-color: #5dade2; } 
+        .syn-green { background-color: #2ecc71; } 
+        .syn-ack-green { background-color: #145a32; } 
+        .ack-green { background-color: #58d68d; }
+        .established { background-color: #f1c40f; } 
+        .packet {
+            position: absolute;
+            width: 130px;
+            height: 45px;
+            line-height: 45px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            color: #fff;
+            visibility: hidden;
+            text-align: center;
+        }
+        .state {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #f1c40f;
+        }
+        /* Watermark style */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.15); /* Light color for watermark */
+            pointer-events: none; /* Ensures it's not interactive */
+            z-index: 10;
+            user-select: none; /* Prevents text selection */
+        }
+    </style>
+</head>
+<body>
+
+    <h2>TCPCopy Three-Way Handshake Animation</h2>
+
+    <div class="container">
+       <div>
+            <div id="clientBox" class="box closed">Client</div>
+            <div id="clientState" class="state">CLOSED</div>
+        </div>
+        <div>
+            <div id="serverBox" class="box closed">Server(tcpcopy)</div>
+            <div id="serverState" class="state">CLOSED</div>
+        </div>
+        <div>
+            <div id="testServerBox" class="box closed">Target Server</div>
+            <div id="testServerState" class="state">CLOSED</div>
+        </div>
+        <div>
+            <div id="auxServerBox" class="box closed">Assistant Server(intercept)</div>
+            <div id="auxServerState" class="state">CLOSED</div>
+        </div>
+    </div>
+
+    <div id="synPacket" class="packet syn-blue">SYN -></div>
+    <div id="synAckPacket" class="packet syn-ack-blue"><- SYN-ACK</div>
+    <div id="ackPacket" class="packet ack-blue">ACK -></div>
+
+    <div id="synPacket2" class="packet syn-green">SYN -></div>
+    <div id="synAckPacket2" class="packet syn-ack-green"><- SYN-ACK</div>
+    <div id="ackPacket2" class="packet ack-green">ACK -></div>
+
+    <div class="watermark">wangbin579</div>
+
+    <script>
+        function updateState(element, text) {
+            document.getElementById(element).innerText = text;
+        }
+
+        function startHandshake() {
+            let clientBox = document.getElementById("clientBox");
+            let serverBox = document.getElementById("serverBox");
+            let testServerBox = document.getElementById("testServerBox");
+            let auxServerBox = document.getElementById("auxServerBox");
+
+            let clientX = clientBox.getBoundingClientRect().x + 80;
+            let serverX = serverBox.getBoundingClientRect().x;
+            let testServerX = testServerBox.getBoundingClientRect().x;
+            let auxServerX = auxServerBox.getBoundingClientRect().x;
+
+            let syn = document.getElementById("synPacket");
+            let synAck = document.getElementById("synAckPacket");
+            let ack = document.getElementById("ackPacket");
+
+            let syn2 = document.getElementById("synPacket2");
+            let synAck2 = document.getElementById("synAckPacket2");
+            let ack2 = document.getElementById("ackPacket2");
+
+            // First handshake
+            gsap.timeline()
+                
+                .set(syn, { visibility: "visible", x: clientX, y: -50 })
+                .call(() => {
+                    updateState("clientState", "SYN_SENT");
+                    clientBox.className = "box syn-blue";
+                })
+                .to(syn, { x: serverX, duration: 5 })
+                .set(syn, { visibility: "hidden" })
+                .call(() => {
+                    updateState("serverState", "SYN_RECEIVED");
+                    serverBox.className = "box syn-blue";
+                })
+                
+                .set(syn2, { visibility: "visible", x: serverX, y: 50 })
+                .to(syn2, { x: testServerX, duration: 5 })
+                .set(syn2, { visibility: "hidden" })
+                .call(() => {
+                    updateState("testServerState", "SYN_RECEIVED");
+                    testServerBox.className = "box syn-green";
+                })
+                
+                .set(synAck, { visibility: "visible", x: serverX, y: -50 })
+                .to(synAck, { x: clientX, duration: 5 })
+                .set(synAck, { visibility: "hidden" })
+                .call(() => {
+                    updateState("clientState", "ESTABLISHED");
+                    clientBox.className = "box established";
+                })
+                
+                .set(synAck2, { visibility: "visible", x: testServerX, y: 50 })
+                .to(synAck2, { x: auxServerX, duration: 5 })
+                .set(synAck2, { visibility: "hidden" })
+                .set(synAck2, { visibility: "visible", x: auxServerX, y: 50 })
+                .to(synAck2, { x: serverX, duration: 5, backgroundColor: "#f1c40f" })
+                .set(synAck2, { visibility: "hidden" })
+                
+                .set(ack, { visibility: "visible", x: clientX, y: -50 })
+                .to(ack, { x: serverX, duration: 5 })
+                .set(ack, { visibility: "hidden" })
+                .call(() => {
+                    updateState("serverState", "ESTABLISHED");
+                    serverBox.className = "box established";
+                })
+                .set(ack2, { visibility: "visible", x: serverX, y: 50 })
+                .to(ack2, { x: testServerX, duration: 5 })
+                .set(ack2, { visibility: "hidden" })
+                .call(() => {
+                    updateState("testServerState", "ESTABLISHED");
+                    testServerBox.className = "box established";
+                });
+                
+
+
+        }
+
+        setTimeout(startHandshake, 1000);
+    </script>
+
+</body>
+</html>
