@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Three-Way Handshake Animation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #eee;
+            padding-top: 50px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            margin: 50px auto;
+            position: relative;
+        }
+        .box {
+            width: 160px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            position: relative;
+        }
+        .closed { background-color: gray; }
+        .syn { background-color: #f39c12; }  
+        .established { background-color: #27ae60; }  
+        .packet {
+            position: absolute;
+            width: 130px;
+            height: 45px;
+            line-height: 45px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: #3498db;  
+            color: #fff;
+            visibility: hidden;
+        }
+        .state {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>TCP Three-Way Handshake Animation</h2>
+
+    <div class="container">
+        <div>
+            <div id="clientBox" class="box closed">Client</div>
+            <div id="clientState" class="state">CLOSED</div>
+        </div>
+        <div>
+            <div id="serverBox" class="box closed">Server</div>
+            <div id="serverState" class="state">CLOSED</div>
+        </div>
+    </div>
+
+    <div id="synPacket" class="packet">SYN -></div>
+    <div id="synAckPacket" class="packet"><- SYN-ACK</div>
+    <div id="ackPacket" class="packet">ACK -></div>
+    <div id="synAckRetransmit" class="packet"><- SYN-ACK (Retransmit)</div>
+    <div id="ackRetransmit" class="packet">ACK -> </div>
+
+    <script>
+        function updateState(element, text) {
+            document.getElementById(element).innerText = text;
+        }
+
+        function startHandshake() {
+            let clientBox = document.getElementById("clientBox");
+            let serverBox = document.getElementById("serverBox");
+
+            let clientX = clientBox.getBoundingClientRect().x + 80; 
+            let serverX = serverBox.getBoundingClientRect().x + 0; 
+
+            let syn = document.getElementById("synPacket");
+            let synAck = document.getElementById("synAckPacket");
+            let ack = document.getElementById("ackPacket");
+            let synAckRetransmit = document.getElementById("synAckRetransmit");
+            let ackRetransmit = document.getElementById("ackRetransmit");
+
+            // Step 1: Client sends SYN ¡ú Server
+            updateState("clientState", "SYN_SENT");
+            clientBox.className = "box syn";
+            gsap.set(syn, { visibility: "visible", x: clientX, y: -50 });
+            gsap.to(syn, { x: serverX, duration: 10, onComplete: function() {
+                gsap.set(syn, { visibility: "hidden" });
+
+                // Step 2: Server receives SYN, sends SYN-ACK
+                updateState("serverState", "SYN_RECEIVED");
+                serverBox.className = "box syn";
+                gsap.set(synAck, { visibility: "visible", x: serverX, y: -50 });
+                gsap.to(synAck, { x: clientX, duration: 10, onComplete: function() {
+                    gsap.set(synAck, { visibility: "hidden" });
+
+                    // Step 3: Client receives SYN-ACK, sends ACK (Packet Lost)
+                    updateState("clientState", "ESTABLISHED");
+                    clientBox.className = "box established";
+                    gsap.set(ack, { visibility: "visible", x: clientX, y: -50 });
+                    gsap.to(ack, { x: serverX - 300, duration: 5, onComplete: function() {
+                        gsap.set(ack, { visibility: "hidden" });
+
+                        // Simulating ACK Packet Loss (No state change on Server)
+                        setTimeout(function() {
+                            // Step 4: Server retransmits SYN-ACK
+                            gsap.set(synAckRetransmit, { visibility: "visible", x: serverX, y: -50 });
+                            gsap.to(synAckRetransmit, { x: clientX, duration: 10, onComplete: function() {
+                                gsap.set(synAckRetransmit, { visibility: "hidden" });
+
+                                // Step 5: Client receives retransmitted SYN-ACK, sends ACK again
+                                gsap.set(ackRetransmit, { visibility: "visible", x: clientX, y: -50 });
+                                gsap.to(ackRetransmit, { x: serverX, duration: 5, onComplete: function() {
+                                    gsap.set(ackRetransmit, { visibility: "hidden" });
+
+                                    // Step 6: Server finally establishes connection
+                                    updateState("serverState", "ESTABLISHED");
+                                    serverBox.className = "box established";
+                                }});
+                            }});
+                        }, 5000); // Delay for retransmission
+                    }});
+                }});
+            }});
+        }
+
+        setTimeout(startHandshake, 1000);
+    </script>
+
+</body>
+</html>
