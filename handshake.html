@@ -12,6 +12,7 @@
             background-color: #222;
             color: #eee;
             padding-top: 50px;
+            position: relative;
         }
         .container {
             display: flex;
@@ -52,9 +53,25 @@
             margin-top: 5px;
             color: #f1c40f;
         }
+        /* Watermark style */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.15); /* Light color for watermark */
+            pointer-events: none; /* Ensures it's not interactive */
+            z-index: 10;
+            user-select: none; /* Prevents text selection */
+        }
     </style>
 </head>
 <body>
+
+    <!-- Watermark -->
+    <div class="watermark">wangbin579</div>
 
     <h2>TCP Three-Way Handshake Animation</h2>
 
@@ -97,33 +114,33 @@
             updateState("clientState", "SYN_SENT");
             clientBox.className = "box syn";
             gsap.set(syn, { visibility: "visible", x: clientX, y: -50 });
-            gsap.to(syn, { x: serverX, duration: 10, onComplete: function() {
+            gsap.to(syn, { x: serverX, duration: 6, onComplete: function() {
                 gsap.set(syn, { visibility: "hidden" });
 
                 // Step 2: Server receives SYN, sends SYN-ACK
                 updateState("serverState", "SYN_RECEIVED");
                 serverBox.className = "box syn";
                 gsap.set(synAck, { visibility: "visible", x: serverX, y: -50 });
-                gsap.to(synAck, { x: clientX, duration: 10, onComplete: function() {
+                gsap.to(synAck, { x: clientX, duration: 6, onComplete: function() {
                     gsap.set(synAck, { visibility: "hidden" });
 
                     // Step 3: Client receives SYN-ACK, sends ACK (Packet Lost)
                     updateState("clientState", "ESTABLISHED");
                     clientBox.className = "box established";
                     gsap.set(ack, { visibility: "visible", x: clientX, y: -50 });
-                    gsap.to(ack, { x: serverX - 300, duration: 5, onComplete: function() {
+                    gsap.to(ack, { x: serverX - 500, duration: 2, onComplete: function() {
                         gsap.set(ack, { visibility: "hidden" });
 
                         // Simulating ACK Packet Loss (No state change on Server)
                         setTimeout(function() {
                             // Step 4: Server retransmits SYN-ACK
                             gsap.set(synAckRetransmit, { visibility: "visible", x: serverX, y: -50 });
-                            gsap.to(synAckRetransmit, { x: clientX, duration: 10, onComplete: function() {
+                            gsap.to(synAckRetransmit, { x: clientX, duration: 5, onComplete: function() {
                                 gsap.set(synAckRetransmit, { visibility: "hidden" });
 
                                 // Step 5: Client receives retransmitted SYN-ACK, sends ACK again
                                 gsap.set(ackRetransmit, { visibility: "visible", x: clientX, y: -50 });
-                                gsap.to(ackRetransmit, { x: serverX, duration: 5, onComplete: function() {
+                                gsap.to(ackRetransmit, { x: serverX, duration: 3, onComplete: function() {
                                     gsap.set(ackRetransmit, { visibility: "hidden" });
 
                                     // Step 6: Server finally establishes connection
