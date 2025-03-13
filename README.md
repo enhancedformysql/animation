@@ -8,7 +8,7 @@ Computer teaching-related animations.
 
 [TCP Three-Way Handshake for TCPCopy Animation](tcpcopy_handshake.html)
 
-[## Diagnosing Unusual TCP Timeout Issues with AWS ELB](elb_timeout.html)
+[Diagnosing Unusual TCP Timeout Issues with AWS ELB](elb_timeout.html)
 
 # Book Link:
 
