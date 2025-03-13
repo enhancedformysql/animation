@@ -128,7 +128,7 @@
                     updateState("clientState", "ESTABLISHED");
                     clientBox.className = "box established";
                     gsap.set(ack, { visibility: "visible", x: clientX, y: -50 });
-                    gsap.to(ack, { x: serverX - 500, duration: 2, onComplete: function() {
+                    gsap.to(ack, { x: serverX / 2, duration: 2, onComplete: function() {
                         gsap.set(ack, { visibility: "hidden" });
 
                         // Simulating ACK Packet Loss (No state change on Server)
