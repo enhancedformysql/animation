@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnosing Unusual TCP Timeout Issues with AWS ELB</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #eee;
+            padding-top: 50px;
+            position: relative;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            margin: 50px auto;
+            position: relative;
+        }
+        .box {
+            width: 160px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            position: relative;
+        }
+        .closed { background-color: gray; }
+        .syn { background-color: #f39c12; }  
+        .established { background-color: #27ae60; }  
+        .packet {
+            position: absolute;
+            width: 130px;
+            height: 45px;
+            line-height: 45px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: #3498db;  
+            color: #fff;
+            visibility: hidden;
+        }
+        .state {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #f1c40f;
+        }
+        .complaint {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #e74c3c;
+        }
+        .countdown {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-top: 20px;
+        }
+        .errorMessage {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Diagnosing Unusual TCP Timeout Issues with AWS ELB</h2>
+
+    <div class="container">
+        <div>
+            <div id="clientBox" class="box closed">Client</div>
+            <div id="clientState" class="state">CLOSED</div>
+            <div id="clientComplaint" class="complaint" style="visibility: hidden;">Why no response?</div>
+        </div>
+        <div>
+            <div id="routerBox" class="box closed" style="background-color: #2ecc71;">AWS ELB</div>
+            <div id="routeState" class="state">RUNNING</div>
+            <div id="timeout_rst" class="complaint" style="visibility: hidden;"></div>
+        </div>
+        <div>
+            <div id="serverBox" class="box closed">Server</div>
+            <div id="serverState" class="state">CLOSED</div>
+            <div id="countdown" class="countdown" style="visibility: hidden;">Processing... 10s</div>
+        </div>
+    </div>
+
+    <div id="synPacket" class="packet">SYN -></div>
+    <div id="synAckPacket" class="packet"><- SYN-ACK</div>
+    <div id="ackPacket" class="packet">ACK -></div>
+    <div id="requestPacket" class="packet">REQUEST -></div>
+    <div id="responsePacket" class="packet"><- RESPONSE</div>
+    <div id="resetPacket" class="packet">TIMEOUT RST -></div>
+
+    <script>
+        function updateState(element, text) {
+            document.getElementById(element).innerText = text;
+        }
+
+        function startHandshake() {
+            let clientBox = document.getElementById("clientBox");
+            let routerBox = document.getElementById("routerBox");
+            let serverBox = document.getElementById("serverBox");
+
+            let clientX = clientBox.getBoundingClientRect().x + 80; 
+            let routerX = routerBox.getBoundingClientRect().x;
+            let serverX = serverBox.getBoundingClientRect().x;
+
+            let syn = document.getElementById("synPacket");
+            let synAck = document.getElementById("synAckPacket");
+            let ack = document.getElementById("ackPacket");
+            let request = document.getElementById("requestPacket");
+            let response = document.getElementById("responsePacket");
+            let reset = document.getElementById("resetPacket");
+            let complaint = document.getElementById("clientComplaint");
+            let countdown = document.getElementById("countdown");
+
+
+            // Step 1: Client sends SYN
+            updateState("clientState", "SYN_SENT");
+            clientBox.className = "box syn";
+            gsap.set(syn, { visibility: "visible", x: clientX, y: -50 });
+            gsap.to(syn, { x: routerX, duration: 2, onComplete: function() {
+                gsap.to(syn, { x: serverX, duration: 2, onComplete: function() {
+                    gsap.set(syn, { visibility: "hidden" });
+
+                    // Step 2: Server replies with SYN-ACK
+                    updateState("serverState", "SYN_RECEIVED");
+                    serverBox.className = "box syn";
+                    gsap.set(synAck, { visibility: "visible", x: serverX, y: -50 });
+                    gsap.to(synAck, { x: routerX, duration: 2, onComplete: function() {
+                        gsap.to(synAck, { x: clientX, duration: 2, onComplete: function() {
+                            gsap.set(synAck, { visibility: "hidden" });
+
+                            // Step 3: Client sends ACK
+                            updateState("clientState", "ESTABLISHED");
+                            clientBox.className = "box established";
+                            gsap.set(ack, { visibility: "visible", x: clientX, y: -50 });
+                            gsap.to(ack, { x: routerX, duration: 2, onComplete: function() {
+                                gsap.to(ack, { x: serverX, duration: 2, onComplete: function() {
+                                    gsap.set(ack, { visibility: "hidden" });
+
+                                    // Connection established
+                                    updateState("serverState", "ESTABLISHED");
+                                    serverBox.className = "box established";
+
+                                    // Step 4: Client sends a request
+                                    gsap.set(request, { visibility: "visible", x: clientX, y: -50 });
+                                    gsap.to(request, { x: routerX, duration: 2, onComplete: function() {
+                                        gsap.to(request, { x: serverX, duration: 2, onComplete: function() {
+                                            gsap.set(request, { visibility: "hidden" });
+
+                                            // Step 5: Server takes too long, router times out
+                                            setTimeout(function() {
+                                                // Show the countdown while server is processing
+                                                gsap.set(countdown, { visibility: "visible" });
+                                                let timeLeft = 10;
+                                                let interval = setInterval(function() {
+                                                    countdown.innerText = `Processing... ${timeLeft--}s`;
+                                                    if (timeLeft < 0) {
+                                                        clearInterval(interval);
+                                                        gsap.set(countdown, { visibility: "hidden" });
+                                                        // After countdown ends, the server takes too long
+                                                        gsap.set(response, { visibility: "visible", x: serverX, y: -50 });
+                                                        gsap.to(response, { x: routerX, duration: 5, onComplete: function() {
+                                                            gsap.set(response, { visibility: "hidden" });
+
+                                                            gsap.set(reset, { visibility: "visible", x: routerX, y: -50 });
+                                                            gsap.to(reset, { x: serverX, duration: 5, onComplete: function() {
+                                                                gsap.set(reset, { visibility: "hidden" });
+                                                                updateState("serverState", "CLOSED");
+                                                                serverBox.className = "box closed";
+                                                                gsap.set(complaint, { visibility: "visible" });
+
+
+                                                            }}); 
+                                                        }});
+                                                    }
+                                                }, 1000);
+                                            }, 1000);
+
+
+                                        }}); 
+                                    }}); 
+                                }}); 
+                            }}); 
+                        }}); 
+                    }}); 
+                }}); 
+            }});
+        }
+
+        setTimeout(startHandshake, 1000);
+
+    </script>
+</body>
+</html>

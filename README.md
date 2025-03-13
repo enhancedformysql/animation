@@ -8,6 +8,8 @@ Computer teaching-related animations.
 
 [TCP Three-Way Handshake for TCPCopy Animation](tcpcopy_handshake.html)
 
+[## Diagnosing Unusual TCP Timeout Issues with AWS ELB](elb_timeout.html)
+
 # Book Link:
 
 [The Art of Problem-Solving in Software Engineering:How to Make MySQL Better](https://github.com/enhancedformysql/The-Art-of-Problem-Solving-in-Software-Engineering_How-to-Make-MySQL-Better).
