@@ -98,6 +98,7 @@
             let tl = gsap.timeline();
 
             document.getElementById("clientStatus").innerText = "SYNC_SENT";
+            document.getElementById("serverStatus").innerText = "CLOSED";
             
             // SYN Packet Movement (Client -> Router -> Server)
             tl.to(synPacket, { duration: 1, top: clientIPRect.top}) // TCP -> IP
@@ -112,7 +113,6 @@
               .to(synPacket, { duration: 1, top: serverTCPRect.top, onComplete: () => { // Server IP -> TCP
                   document.getElementById("synAckPacket").style.display = "block";
                   document.getElementById("serverStatus").innerText = "SYNC_RECV";
-                  document.getElementById("serverStatus").innerText = "SYNC_SENT";
                   gsap.set("#synPacket", { display: "none" });
                   gsap.set("#synAckPacket", {
                       left: serverTCPRect.left + 30,
