@@ -134,7 +134,7 @@
                     gsap.set(syn, { visibility: "hidden" });
 
                     // Step 2: Server replies with SYN-ACK
-                    updateState("serverState", "SYN_RECEIVED");
+                    updateState("serverState", "SYN_RCVD");
                     serverBox.className = "box syn";
                     gsap.set(synAck, { visibility: "visible", x: serverX, y: -50 });
                     gsap.to(synAck, { x: routerX, duration: 2, onComplete: function() {

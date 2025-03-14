@@ -112,7 +112,7 @@
               .to(synPacket, { duration: 1, top: serverIPRect.top }) // Server IP
               .to(synPacket, { duration: 1, top: serverTCPRect.top, onComplete: () => { // Server IP -> TCP
                   document.getElementById("synAckPacket").style.display = "block";
-                  document.getElementById("serverStatus").innerText = "SYNC_RECV";
+                  document.getElementById("serverStatus").innerText = "SYN_RCVD";
                   gsap.set("#synPacket", { display: "none" });
                   gsap.set("#synAckPacket", {
                       left: serverTCPRect.left + 30,
@@ -132,7 +132,7 @@
               .to("#synAckPacket", { duration: 1, top: clientIPRect.top }) // Client IP
               .to("#synAckPacket", { duration: 1, top: clientTCPRect.top, onComplete: () => { // Client IP -> TCP
                   document.getElementById("clientStatus").innerText = "ESTABLISHED"; // Update client status
-                  document.getElementById("serverStatus").innerText = "SYNC_RECV";
+                  document.getElementById("serverStatus").innerText = "SYN_RCVD";
                   document.getElementById("ackPacket").style.display = "block";
 
                   gsap.set("#synAckPacket", { display: "none" });
