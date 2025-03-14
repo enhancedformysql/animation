@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Handshake Animation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; background-color: #f4f4f4; }
+        h1 { margin-top: 20px; color: #333; }
+        .container { display: flex; justify-content: space-around; margin-top: 20px; }
+        .device { text-align: center; font-weight: bold; position: relative; }
+        .stack { border: 2px solid black; padding: 10px; width: 120px; text-align: center; margin: 5px auto; border-radius: 5px; }
+        .app { background-color: #ffcc00; }
+        .tcp { background-color: #ff5733; color: white; }
+        .ip { background-color: #33b5e5; color: white; }
+        .datalink { background-color: #28a745; color: white; }
+        .packet { width: 60px; height: 30px; text-align: center; line-height: 30px; position: absolute; border-radius: 5px; color: white; font-weight: bold; }
+        .syn { background-color: #ff5733; }
+        .ack { background-color: #33b5e5; }
+        .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        .btn-container { margin-top: 200px; }
+        .status { margin-top: 10px; font-weight: bold; color: green; }
+        #synAckPacket { width: 80px; }
+        #client .status { margin-top: 10px; font-size: 18px; color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>TCP Handshake Animation</h1>
+
+    <div class="container">
+        <div class="device" id="client">
+            <div>Client</div>
+            <div class="stack app">App</div>
+            <div class="stack tcp">TCP</div>
+            <div class="stack ip">IP</div>
+            <div class="stack datalink">Data Link</div>
+            <div id="clientStatus" class="status">CLOSED</div>
+        </div>
+
+        <div class="device" id="router">
+            <div>Router</div>
+            <div class="stack ip">IP</div>
+            <div class="stack datalink">Data Link</div>
+        </div>
+
+        <div class="device" id="server">
+            <div>Server</div>
+            <div class="stack app">App</div>
+            <div class="stack tcp">TCP</div>
+            <div class="stack ip">IP</div>
+            <div class="stack datalink">Data Link</div>
+            <div id="serverStatus" class="status">CLOSED</div>
+        </div>
+    </div>
+
+    <!-- Packets -->
+    <div id="synPacket" class="packet syn" style="display: none;">SYN</div>
+    <div id="synAckPacket" class="packet ack" style="display: none;">SYN-ACK</div>
+    <div id="ackPacket" class="packet syn" style="display: none;">ACK</div>
+
+    <div class="btn-container">
+        <button class="btn" onclick="startTCPHandshake()">Start Handshake</button>
+    </div>
+    
+    <script>
+        function startTCPHandshake() {
+            console.log("Handshake started!");
+
+            // Get the positions of the client, router, and server
+            const clientRect = document.getElementById("client").getBoundingClientRect();
+            const routerRect = document.getElementById("router").getBoundingClientRect();
+            const serverRect = document.getElementById("server").getBoundingClientRect();
+
+            // Get the positions of the TCP, IP, and Data Link layers
+            const clientAppRect = document.querySelector("#client .app").getBoundingClientRect();
+            const clientTCPRect = document.querySelector("#client .tcp").getBoundingClientRect();
+            const clientIPRect = document.querySelector("#client .ip").getBoundingClientRect();
+            const clientDatalinkRect = document.querySelector("#client .datalink").getBoundingClientRect();
+
+            const routerIPRect = document.querySelector("#router .ip").getBoundingClientRect();
+            const routerDatalinkRect = document.querySelector("#router .datalink").getBoundingClientRect();
+
+            const serverTCPRect = document.querySelector("#server .tcp").getBoundingClientRect();
+            const serverIPRect = document.querySelector("#server .ip").getBoundingClientRect();
+            const serverDatalinkRect = document.querySelector("#server .datalink").getBoundingClientRect();
+
+
+
+            // Initialize the SYN packet position
+            gsap.set(synPacket, {
+                left:  clientTCPRect.left + 30, // Relative to client container
+                top:   clientTCPRect.top,  // Relative to client container
+                display: "block" // Ensure the packet is visible
+            });
+
+
+            let tl = gsap.timeline();
+
+            document.getElementById("clientStatus").innerText = "SYNC_SENT";
+            
+            // SYN Packet Movement (Client -> Router -> Server)
+            tl.to(synPacket, { duration: 1, top: clientIPRect.top}) // TCP -> IP
+              .to(synPacket, { duration: 1, top: clientDatalinkRect.top + 100 }) // IP -> Data Link
+              .to(synPacket, { duration: 1, left: routerDatalinkRect.left + 30 }) // Data Link -> Router (below)
+              .to(synPacket, { duration: 1, top: routerDatalinkRect.top}) // Data Link -> Router (below)
+              .to(synPacket, { duration: 1, top: routerIPRect.top}) // Router IP
+              .to(synPacket, { duration: 1, top: clientDatalinkRect.top + 100 }) // Router IP -> Data Link
+              .to(synPacket, { duration: 1, left: serverDatalinkRect.left + 30}) // Router Data Link -> Server (below)
+              .to(synPacket, { duration: 1, top: serverDatalinkRect.top }) // Server Data Link
+              .to(synPacket, { duration: 1, top: serverIPRect.top }) // Server IP
+              .to(synPacket, { duration: 1, top: serverTCPRect.top, onComplete: () => { // Server IP -> TCP
+                  document.getElementById("synAckPacket").style.display = "block";
+                  document.getElementById("serverStatus").innerText = "SYNC_RECV";
+                  document.getElementById("serverStatus").innerText = "SYNC_SENT";
+                  gsap.set("#synPacket", { display: "none" });
+                  gsap.set("#synAckPacket", {
+                      left: serverTCPRect.left + 30,
+                      top: serverTCPRect.top
+                  });
+              }});
+
+            // SYN-ACK Packet Movement (Server -> Router -> Client)
+            tl.to("#synAckPacket", { duration: 1, top: serverIPRect.top }) // TCP -> IP
+              .to("#synAckPacket", { duration: 1, top: serverDatalinkRect.top + 100 }) // IP -> Data Link
+              .to("#synAckPacket", { duration: 1, left: routerDatalinkRect.left + 30 }) // Data Link -> Router (below)
+              .to("#synAckPacket", { duration: 1, top: routerDatalinkRect.top }) // Router Data Link
+              .to("#synAckPacket", { duration: 1, top: routerIPRect.top  }) // Router IP
+              .to("#synAckPacket", { duration: 1, top: serverDatalinkRect.top + 100 }) // Router IP -> Data Link
+              .to("#synAckPacket", { duration: 1, left: clientDatalinkRect.left + 30 }) // Router Data Link -> Client (below)
+              .to("#synAckPacket", { duration: 1, top: clientDatalinkRect.top  }) // Client Data Link
+              .to("#synAckPacket", { duration: 1, top: clientIPRect.top }) // Client IP
+              .to("#synAckPacket", { duration: 1, top: clientTCPRect.top, onComplete: () => { // Client IP -> TCP
+                  document.getElementById("clientStatus").innerText = "ESTABLISHED"; // Update client status
+                  document.getElementById("serverStatus").innerText = "SYNC_RECV";
+                  document.getElementById("ackPacket").style.display = "block";
+
+                  gsap.set("#synAckPacket", { display: "none" });
+                  gsap.set("#ackPacket", {
+                      left: clientTCPRect.left + 30,
+                      top: clientTCPRect.top
+                  });
+              }});
+
+            // ACK Packet Movement (Client -> Router -> Server)
+            tl.to("#ackPacket", { duration: 1, top: clientIPRect.top  }) // TCP -> IP
+              .to("#ackPacket", { duration: 1, top: clientDatalinkRect.top + 100  }) // IP -> Data Link
+              .to("#ackPacket", { duration: 1, left: routerDatalinkRect.left + 30 }) // Data Link -> Router (below)
+              .to("#ackPacket", { duration: 1, top: routerDatalinkRect.top  }) // Router Data Link
+              .to("#ackPacket", { duration: 1, top: routerIPRect.top  }) // Router IP
+              .to("#ackPacket", { duration: 1, top: clientDatalinkRect.top + 100 }) // Router IP -> Data Link
+              .to("#ackPacket", { duration: 1, left: serverDatalinkRect.left + 30 }) // Router Data Link -> Server (below)
+              .to("#ackPacket", { duration: 1, top: serverDatalinkRect.top  }) // Server Data Link
+              .to("#ackPacket", { duration: 1, top: serverIPRect.top  }) // Server IP
+              .to("#ackPacket", { duration: 1, top: serverTCPRect.top, onComplete: () => { // Server IP -> TCP
+                  document.getElementById("serverStatus").innerText = "ESTABLISHED";
+                  gsap.set("#ackPacket", { display: "none" });
+              }});
+        }
+    </script>
+</body>
+</html>

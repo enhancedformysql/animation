@@ -4,6 +4,8 @@ Computer teaching-related animations.
 
 # Table of Contents
 
+[TCP Three-Way Handshake Animation for Web](handshake_for_web.html)
+
 [TCP Three-Way Handshake Animation (with Packet Loss & Retransmission)](handshake.html)
 
 [TCP Three-Way Handshake for TCPCopy Animation](tcpcopy_handshake.html)
