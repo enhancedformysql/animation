@@ -4,11 +4,13 @@ Computer teaching-related animations.
 
 # Table of Contents
 
-[TCP Three-Way Handshake Animation for Web](handshake_for_web.html)
+[TCP Three-Way Handshake for Web](handshake_for_web.html)
 
-[TCP Three-Way Handshake Animation (with Packet Loss & Retransmission)](handshake.html)
+[TCP Three-Way Handshake (with Packet Loss & Retransmission)](handshake.html)
 
-[TCP Three-Way Handshake for TCPCopy Animation](tcpcopy_handshake.html)
+[TCP Three-Way Handshake for TCPCopy](tcpcopy_handshake.html)
+
+[How TCPCopy Works](how_tcpcopy_works.html)
 
 [Diagnosing Unusual TCP Timeout Issues with AWS ELB](elb_timeout.html)
 
