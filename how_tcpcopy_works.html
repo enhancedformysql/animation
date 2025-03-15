@@ -6,8 +6,15 @@
     <title>TCP Handshake & TCPCopy Replication Animation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; background-color: #f4f4f4; }
-        h1 { margin-top: 20px; color: #333; }
+        body { 
+            text-align: center; 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f4f4; 
+        }
+        h1 { 
+            margin-top: 20px; 
+            color: #333; 
+        }
         .container { 
             display: flex; 
             justify-content: center; 
@@ -30,31 +37,73 @@
             margin: 5px auto; 
             border-radius: 5px; 
         }
-        .app { background-color: #ffcc00; }
+        .app { 
+            background-color: #ffcc00; 
+        }
         .tcpcopy, .intercept { 
             background-color: #ffcc00; 
             font-size: 20px; 
             padding: 5px; 
         }
-        .tcp { background-color: #ff5733; color: white; }
-        .ip { background-color: #33b5e5; color: white; }
-        .datalink { background-color: #28a745; color: white; }
-        .packet { 
-            width: 60px; height: 30px; 
-            text-align: center; line-height: 30px; 
-            position: absolute; border-radius: 5px; 
-            color: white; font-weight: bold; 
+        .tcp { 
+            background-color: #ff5733; 
+            color: white; 
         }
-        .online { background-color: orange; }
-        .replication { background-color: blue; }
-        .test { background-color: green; }
-
-        .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
-        .btn-container { margin-top: 200px; }
-        .status { margin-top: 10px; font-weight: bold; color: green; font-size: 16px; }
-        #synAckPacket { width: 80px; }
-        #synAckPacket2 { width: 80px; }
-        #synAckPacket2_captured { width: 80px; }
+        .ip { 
+            background-color: #33b5e5; 
+            color: white; 
+        }
+        .datalink { 
+            background-color: #28a745; 
+            color: white; 
+        }
+        .packet { 
+            width: 60px; 
+            height: 30px; 
+            text-align: center; 
+            line-height: 30px; 
+            position: absolute; 
+            border-radius: 5px; 
+            color: white; 
+            font-weight: bold; 
+        }
+        .online { 
+            background-color: orange; 
+        }
+        .replication { 
+            background-color: blue; 
+        }
+        .test { 
+            background-color: green; 
+        }
+        .btn { 
+            margin-top: 20px; 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+        }
+        .btn-container { 
+            margin-top: 200px; 
+        }
+        .status { 
+            margin-top: 10px; 
+            font-weight: bold; 
+            color: green; 
+            font-size: 16px; 
+        }
+        #synAckPacket { 
+            width: 80px; 
+        }
+        #synAckPacket2 { 
+            width: 80px; 
+        }
+        #synAckPacket2_captured { 
+            width: 80px; 
+        }
     </style>
 </head>
 <body>
@@ -164,19 +213,14 @@
               .to(synPacket, { duration: 1, top: clientDatalinkRect.top + 100 })
               .to(synPacket, { duration: 1, left: serverDatalinkRect.left + 30 })
               .to(synPacket, { duration: 1, top: serverDatalinkRect.top })
-              .to(synPacket, { duration: 1, top: serverIPRect.top });
-  
-            tl.to(synPacket, { duration: 1, top: serverTCPRect.top, onComplete: () => {
+              .to(synPacket, { duration: 1, top: serverIPRect.top, onComplete: () => {
                   document.getElementById("synPacket_captured").style.display = "block";
-                  document.getElementById("serverStatus").innerText = "SYN_RCVD";
-                  gsap.set("#synPacket", { display: "none" });
                   gsap.set("#synPacket_captured", {
                       left: serverIPRect.left + 30,
                       top: serverIPRect.top
                   });
-              }}); 
-              
-            tl.to("#synPacket_captured", { duration: 1, left: tcpcopyRect.left + 30 })
+              }})
+              .to("#synPacket_captured", { duration: 1, left: tcpcopyRect.left + 30 })
               .to("#synPacket_captured", { duration: 1, top: tcpcopyRect.top, onComplete: () => {
                   document.getElementById("synPacket2").style.display = "block";
                   gsap.set("#synPacket_captured", { display: "none" });
@@ -184,56 +228,63 @@
                       left: tcpcopyRect.left + 30,
                       top: tcpcopyRect.top
                   });
-              }});                
-
-            tl.to("#synPacket2", { duration: 1, left: tcpcopyRect.left + 30 })
-              .to("#synPacket2", { duration: 1, top: tcpcopyRect.top })
-              .to("#synPacket2", { duration: 1, top: serverIPRect.top })
-              .to("#synPacket2", { duration: 1, left: serverIPRect.left + 30 })
-              .to("#synPacket2", { duration: 1, top: serverDatalinkRect.top })
-              .to("#synPacket2", { duration: 1, top: serverDatalinkRect.top + 100 })
-              .to("#synPacket2", { duration: 1, left: targetServerDatalinkRect.left + 100 })
-              .to("#synPacket2", { duration: 1, top: targetServerDatalinkRect.top })
-              .to("#synPacket2", { duration: 1, top: targetServerTCPRect.top, onComplete: () => {
+              }})
+              .to(synPacket, { duration: 1, top: serverTCPRect.top, onComplete: () => {
                   document.getElementById("synAckPacket").style.display = "block";
-                  document.getElementById("targetServerStatus").innerText = "SYN_RCVD";
-                  gsap.set("#synPacket2", { display: "none" });
+                  document.getElementById("serverStatus").innerText = "SYN_RCVD";
+                  gsap.set("#synPacket", { display: "none" });
                   gsap.set("#synAckPacket", {
                       left: serverTCPRect.left + 30,
                       top: serverTCPRect.top
                   });
-              }});    
+              }}, "<"); 
               
+            
             tl.to("#synAckPacket", { duration: 1, top: serverIPRect.top })
+              .to("#synPacket2", { duration: 1, top: serverIPRect.top }, "<")
               .to("#synAckPacket", { duration: 1, top: serverDatalinkRect.top + 100 })
-              .to("#synAckPacket", { duration: 1, left: clientDatalinkRect.left + 30 })
-              .to("#synAckPacket", { duration: 1, top: clientDatalinkRect.top  })
-              .to("#synAckPacket", { duration: 1, top: clientIPRect.top })
-              .to("#synAckPacket", { duration: 1, top: clientTCPRect.top, onComplete: () => {
-                  document.getElementById("clientStatus").innerText = "ESTABLISHED";
-                  document.getElementById("serverStatus").innerText = "SYN_RCVD";
+              .to("#synPacket2", { duration: 1, left: serverIPRect.left + 30 }, "<")
+              .to("#synAckPacket", { duration: 1, left: (clientDatalinkRect.left + serverDatalinkRect.left) / 2, onComplete: () => {
+              	    const transitText = document.createElement("div");
+						        transitText.id = "transitText";
+						        transitText.innerText = "In transit...";
+						        transitText.style.position = "absolute";
+						        transitText.style.left = `${(clientDatalinkRect.left + serverDatalinkRect.left) / 2}px`;
+						        transitText.style.top = `${clientDatalinkRect.top + 135}px`;
+						        transitText.style.color = "black";
+						        transitText.style.fontWeight = "bold";
+						        transitText.style.fontSize = "15px";
+						        document.body.appendChild(transitText);
+              }})
+              .to("#synPacket2", { duration: 1, top: serverDatalinkRect.top }, "<")
+              .to("#synPacket2", { duration: 1, top: serverDatalinkRect.top + 100 })
+              .to("#synPacket2", { duration: 1, left: targetServerDatalinkRect.left + 100 })
+              .to("#synPacket2", { duration: 1, top: targetServerDatalinkRect.top })
+              .to("#synPacket2", { duration: 1, top: targetServerTCPRect.top, onComplete: () => {
                   document.getElementById("synAckPacket2").style.display = "block";
-                  gsap.set("#synAckPacket", { display: "none" });
+                  document.getElementById("targetServerStatus").innerText = "SYN_RCVD";
+                  gsap.set("#synPacket2", { display: "none" });
                   gsap.set("#synAckPacket2", {
                       left: targetServerTCPRect.left + 30,
                       top: targetServerTCPRect.top
                   });
-              }});
+
+              }});    
               
             tl.to("#synAckPacket2", { duration: 1, top: targetServerIPRect.top })
               .to("#synAckPacket2", { duration: 1, top: targetServerDatalinkRect.top + 100 })
               .to("#synAckPacket2", { duration: 1, left: assistServerDatalinkRect.left + 30 })
-              .to("#synAckPacket2", { duration: 1, top: assistServerDatalinkRect.top  })
-              .to("#synAckPacket2", { duration: 1, top: assistServerIPRect.top, onComplete: () => {
+              .to("#synAckPacket2", { duration: 1, top: assistServerDatalinkRect.top, onComplete: () => {
                   document.getElementById("synAckPacket2_captured").style.display = "block";
-                  gsap.set("#synAckPacket2", { display: "none" });
                   gsap.set("#synAckPacket2_captured", {
                       left: assistServerDatalinkRect.left + 30,
                       top: assistServerDatalinkRect.top
                   });
-              }});    
-              
-            tl.to("#synAckPacket2_captured", { duration: 1, left: interceptRect.left + 30 })
+              }})
+              .to("#synAckPacket2_captured", { duration: 1, left: interceptRect.left + 30 })
+              .to("#synAckPacket2", { duration: 1, top: assistServerIPRect.top, onComplete: () => {
+                  gsap.set("#synAckPacket2", { display: "none" });     
+              }}, "<")   
               .to("#synAckPacket2_captured", { duration: 1, top: interceptRect.top, onComplete: () => {
                   document.getElementById("synAckPacket2_info").style.display = "block";
                   gsap.set("#synAckPacket2_captured", { display: "none" });
@@ -241,7 +292,8 @@
                      left: interceptRect.left + 30,
                       top: interceptRect.top
                   });
-              }});                                
+              }});
+                            
                             
             tl.to("#synAckPacket2_info", { duration: 1, top: assistServerTCPRect.top  })
               .to("#synAckPacket2_info", { duration: 1, left: assistServerTCPRect.left + 30 })
@@ -253,31 +305,40 @@
               .to("#synAckPacket2_info", { duration: 1, top: serverTCPRect.top })
               .to("#synAckPacket2_info", { duration: 1, left: tcpcopyRect.left+ 30 })
               .to("#synAckPacket2_info", { duration: 1, top: tcpcopyRect.top, onComplete: () => {
-                  document.getElementById("ackPacket").style.display = "block";
                   gsap.set("#synAckPacket2_info", { display: "none" });
+              		const transitText = document.getElementById("transitText");
+    			    		if (transitText) {
+            				transitText.remove();
+        					}
+              }});    
+              
+              
+            tl.to("#synAckPacket", { duration: 1, left: clientDatalinkRect.left + 30 })
+              .to("#synAckPacket", { duration: 1, top: clientDatalinkRect.top  })
+              .to("#synAckPacket", { duration: 1, top: clientIPRect.top })
+              .to("#synAckPacket", { duration: 1, top: clientTCPRect.top, onComplete: () => {
+                  document.getElementById("clientStatus").innerText = "ESTABLISHED";
+                  document.getElementById("ackPacket").style.display = "block";
+                  gsap.set("#synAckPacket", { display: "none" });
                   gsap.set("#ackPacket", {
                      left: clientTCPRect.left + 30,
                       top: clientTCPRect.top
                   });
-              }});    
+              }}); 
+              
  
             tl.to("#ackPacket", { duration: 1, top: clientIPRect.top  })
               .to("#ackPacket", { duration: 1, top: clientDatalinkRect.top + 100  })
               .to("#ackPacket", { duration: 1, left: serverDatalinkRect.left + 30 })
               .to("#ackPacket", { duration: 1, top: serverDatalinkRect.top  })
-              .to("#ackPacket", { duration: 1, top: serverIPRect.top  })
-              .to("#ackPacket", { duration: 1, top: serverTCPRect.top, onComplete: () => {
+              .to("#ackPacket", { duration: 1, top: serverIPRect.top, onComplete: () => {
                   document.getElementById("ackPacket_captured").style.display = "block";
-                  document.getElementById("serverStatus").innerText = "ESTABLISHED";
-                  gsap.set("#ackPacket", { display: "none" });
                   gsap.set("#ackPacket_captured", {
                      left: serverIPRect.left + 30,
                       top: serverIPRect.top
                   });
-              }});
-              
-
-            tl.to("#ackPacket_captured", { duration: 1, left: tcpcopyRect.left + 30 })
+              }})
+              .to("#ackPacket_captured", { duration: 1, left: tcpcopyRect.left + 30 })
               .to("#ackPacket_captured", { duration: 1, top: tcpcopyRect.top, onComplete: () => {
                   document.getElementById("ackPacket2").style.display = "block";
                   gsap.set("#ackPacket_captured", { display: "none" });
@@ -285,7 +346,13 @@
                       left: tcpcopyRect.left + 30,
                       top: tcpcopyRect.top
                   });
-              }});                
+              }})
+              .to("#ackPacket", { duration: 1, top: serverTCPRect.top, onComplete: () => {
+                  document.getElementById("serverStatus").innerText = "ESTABLISHED";
+                  gsap.set("#ackPacket", { display: "none" });
+
+              }}, "<"); 
+                         
             
             tl.to("#ackPacket2", { duration: 1, left: tcpcopyRect.left + 30 })
               .to("#ackPacket2", { duration: 1, top: tcpcopyRect.top })
