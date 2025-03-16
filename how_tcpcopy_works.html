@@ -279,8 +279,24 @@
               }});    
               
             tl.to("#synAckPacket2", { duration: 1, top: targetServerIPRect.top })
-              .to("#synAckPacket2", { duration: 1, top: targetServerDatalinkRect.top + 100 })
-              .to("#synAckPacket2", { duration: 1, left: assistServerDatalinkRect.left + 30 })
+              .to("#synAckPacket2", { duration: 1, top: targetServerDatalinkRect.top + 100, onComplete: () => {
+              	    const routeText = document.createElement("div");
+						        routeText.id = "routeText";
+						        routeText.innerText = "Route it to the assistant server";
+						        routeText.style.position = "absolute";
+						        routeText.style.left = `${targetServerDatalinkRect.left}px`;
+						        routeText.style.top = `${targetServerDatalinkRect.top + 150}px`;
+						        routeText.style.color = "black";
+						        routeText.style.fontWeight = "bold";
+						        routeText.style.fontSize = "15px";
+						        document.body.appendChild(routeText);
+              }})
+              .to("#synAckPacket2", { duration: 1, left: assistServerDatalinkRect.left + 30, onComplete: () => {
+              		const routeText = document.getElementById("routeText");
+    			    		if (routeText) {
+            				routeText.remove();
+            			}
+              }})
               .to("#synAckPacket2", { duration: 1, top: assistServerDatalinkRect.top, onComplete: () => {
                   document.getElementById("synAckPacket2_captured").style.display = "block";
                   gsap.set("#synAckPacket2_captured", {
