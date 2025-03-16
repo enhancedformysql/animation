@@ -20,25 +20,25 @@
 
         .state {
             position: absolute;
-            width: 100px; /* Wider for better text fit */
-            height: 40px; /* Taller for better visibility */
-            background-color: white; /* White background for states */
-            border: 2px solid #333; /* Border for visibility */
-            border-radius: 10px; /* Rounded corners */
+            width: 100px;
+            height: 40px;
+            background-color: white;
+            border: 2px solid #333;
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #333; /* Dark text for contrast */
+            color: #333;
             font-size: 14px;
             text-align: center;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s ease; /* Smooth transition for background color */
+            transition: background-color 0.3s ease;
         }
 
         .state.active {
-            background-color: #4CAF50; /* Green background for active state */
-            color: white; /* White text for better contrast */
+            background-color: #4CAF50;
+            color: white;
         }
 
         svg {
@@ -55,10 +55,21 @@
             stroke-width: 2;
             marker-end: url(#arrowhead);
         }
-
+        
         .common_line {
             stroke: #333;
             stroke-width: 2;
+        }
+
+        /* Animation for states */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .state.animated {
+            animation: pulse 0.5s ease-in-out;
         }
     </style>
 </head>
@@ -67,15 +78,15 @@
         <!-- TCP State Nodes -->
         <div id="closed" class="state" style="left: 500px; top: 50px;">CLOSED</div>
         <div id="listen" class="state" style="left: 500px; top: 150px;">LISTEN</div>
-        <div id="synRcvd" class="state" style="left: 300px; top: 250px;">SYN_RCVD</div>
-        <div id="synSent" class="state" style="left: 700px; top: 250px;">SYN_SENT</div>
+        <div id="synRcvd" class="state" style="left: 150px; top: 250px;">SYN_RCVD</div>
+        <div id="synSent" class="state" style="left: 850px; top: 250px;">SYN_SENT</div>
         <div id="established" class="state" style="left: 500px; top: 350px;">ESTABLISHED</div>
-        <div id="finWait1" class="state" style="left: 300px; top: 450px;">FIN_WAIT_1</div>
-        <div id="closeWait" class="state" style="left: 700px; top: 450px;">CLOSE_WAIT</div>
-        <div id="closing" class="state" style="left: 500px; top: 450px;">CLOSING</div>
-        <div id="finWait2" class="state" style="left: 300px; top: 600px;">FIN_WAIT_2</div>
-        <div id="timeWait" class="state" style="left: 500px; top: 600px;">TIME_WAIT</div>
-        <div id="lastAck" class="state" style="left: 700px; top: 550px;">LAST_ACK</div>
+        <div id="finWait1" class="state" style="left: 150px; top: 500px;">FIN_WAIT_1</div>
+        <div id="closeWait" class="state" style="left: 850px; top: 500px;">CLOSE_WAIT</div>
+        <div id="closing" class="state" style="left: 500px; top: 500px;">CLOSING</div>
+        <div id="finWait2" class="state" style="left: 150px; top: 650px;">FIN_WAIT_2</div>
+        <div id="timeWait" class="state" style="left: 500px; top: 650px;">TIME_WAIT</div>
+        <div id="lastAck" class="state" style="left: 850px; top: 600px;">LAST_ACK</div>
 
         <!-- SVG Canvas -->
         <svg>
@@ -124,7 +135,8 @@
             <!-- TIME_WAIT -> CLOSED -->
             <line id="timeWaitToClosed" class="arrow"></line>
 
-            <line id="vertical_common_line" class="arrow"></line>
+            <!-- Common lines -->
+            <line id="vertical_common_line" class="common_line"></line>
             <line id="commonToClosed" class="arrow"></line>
         </svg>
     </div>
@@ -132,29 +144,115 @@
     <script>
         // Get all state nodes
         const states = {
-            closed: document.getElementById('closed'),
-            listen: document.getElementById('listen'),
-            synSent: document.getElementById('synSent'),
-            synRcvd: document.getElementById('synRcvd'),
-            established: document.getElementById('established'),
-            finWait1: document.getElementById('finWait1'),
-            closing: document.getElementById('closing'),
-            finWait2: document.getElementById('finWait2'),
-            closeWait: document.getElementById('closeWait'),
-            lastAck: document.getElementById('lastAck'),
-            timeWait: document.getElementById('timeWait')
+            closed: {
+                element: document.getElementById('closed'),
+                callback: () => {
+                    console.log('CLOSED state clicked');
+                    animateState(states.closed.element);
+                    window.open('handshake.html', '_blank'); // Open external page
+                }
+            },
+            listen: {
+                element: document.getElementById('listen'),
+                callback: () => {
+                    console.log('LISTEN state clicked');
+                    animateState(states.listen.element);
+                    window.open('handshake.html', '_blank'); // Open external page
+                }
+            },
+            synSent: {
+                element: document.getElementById('synSent'),
+                callback: () => {
+                    console.log('SYN_SENT state clicked');
+                    animateState(states.synSent.element);
+                    window.open('handshake.html', '_blank'); // Open external page
+                }
+            },
+            synRcvd: {
+                element: document.getElementById('synRcvd'),
+                callback: () => {
+                    console.log('SYN_RCVD state clicked');
+                    animateState(states.synRcvd.element);
+                    window.open('handshake.html', '_blank'); // Open external page
+                }
+            },
+            established: {
+                element: document.getElementById('established'),
+                callback: () => {
+                    console.log('ESTABLISHED state clicked');
+                    animateState(states.established.element);
+                    window.open('handshake.html', '_blank'); // Open external page
+                }
+            },
+            finWait1: {
+                element: document.getElementById('finWait1'),
+                callback: () => {
+                    console.log('FIN_WAIT_1 state clicked');
+                    animateState(states.finWait1.element);
+                    window.open('close.html', '_blank'); // Open external page
+                }
+            },
+            closing: {
+                element: document.getElementById('closing'),
+                callback: () => {
+                    console.log('CLOSING state clicked');
+                    animateState(states.closing.element);
+                    window.open('closing.html', '_blank'); // Open external page
+                }
+            },
+            finWait2: {
+                element: document.getElementById('finWait2'),
+                callback: () => {
+                    console.log('FIN_WAIT_2 state clicked');
+                    animateState(states.finWait2.element);
+                    window.open('close.html', '_blank'); // Open external page
+                }
+            },
+            closeWait: {
+                element: document.getElementById('closeWait'),
+                callback: () => {
+                    console.log('CLOSE_WAIT state clicked');
+                    animateState(states.closeWait.element);
+                    window.open('closeWait.html', '_blank'); // Open external page
+                }
+            },
+            lastAck: {
+                element: document.getElementById('lastAck'),
+                callback: () => {
+                    console.log('LAST_ACK state clicked');
+                    animateState(states.lastAck.element);
+                    window.open('lastAck.html', '_blank'); // Open external page
+                }
+            },
+            timeWait: {
+                element: document.getElementById('timeWait'),
+                callback: () => {
+                    console.log('TIME_WAIT state clicked');
+                    animateState(states.timeWait.element);
+                    window.open('timeWait.html', '_blank'); // Open external page
+                }
+            }
         };
+
+        // Function to animate a state
+        function animateState(element) {
+            element.classList.add('animated');
+            setTimeout(() => {
+                element.classList.remove('animated');
+            }, 500); // Match the animation duration
+        }
 
         // Add click event listeners to all states
         Object.values(states).forEach(state => {
-            state.addEventListener('click', () => {
+            state.element.addEventListener('click', () => {
                 // Remove active class from all states
-                Object.values(states).forEach(s => s.classList.remove('active'));
+                Object.values(states).forEach(s => s.element.classList.remove('active'));
                 // Add active class to the clicked state
-                state.classList.add('active');
-                // Log the state for debugging
-                console.log(`Clicked state: ${state.textContent}`);
-                // TODO: Add animation logic here
+                state.element.classList.add('active');
+                // Execute the callback function
+                if (state.callback) {
+                    state.callback();
+                }
             });
         });
 
@@ -257,122 +355,122 @@
         // Update arrow positions
         function updateArrows() {
             // CLOSED -> LISTEN
-            arrows.closedToListen.setAttribute('x1', getBottomCenter(states.closed).x);
-            arrows.closedToListen.setAttribute('y1', getBottomCenter(states.closed).y);
-            arrows.closedToListen.setAttribute('x2', getTopCenter(states.listen).x);
-            arrows.closedToListen.setAttribute('y2', getTopCenter(states.listen).y);
+            arrows.closedToListen.setAttribute('x1', getBottomCenter(states.closed.element).x);
+            arrows.closedToListen.setAttribute('y1', getBottomCenter(states.closed.element).y);
+            arrows.closedToListen.setAttribute('x2', getTopCenter(states.listen.element).x);
+            arrows.closedToListen.setAttribute('y2', getTopCenter(states.listen.element).y);
 
             // LISTEN -> SYN_RCVD
-            arrows.listenToSynRcvd.setAttribute('x1', getLeftCenter(states.listen).x);
-            arrows.listenToSynRcvd.setAttribute('y1', getLeftCenter(states.listen).y);
-            arrows.listenToSynRcvd.setAttribute('x2', getTopRight(states.synRcvd).x);
-            arrows.listenToSynRcvd.setAttribute('y2', getTopRight(states.synRcvd).y);
+            arrows.listenToSynRcvd.setAttribute('x1', getLeftCenter(states.listen.element).x);
+            arrows.listenToSynRcvd.setAttribute('y1', getLeftCenter(states.listen.element).y);
+            arrows.listenToSynRcvd.setAttribute('x2', getTopRight(states.synRcvd.element).x);
+            arrows.listenToSynRcvd.setAttribute('y2', getTopRight(states.synRcvd.element).y);
 
             // SYN_SENT -> SYN_RCVD
-            arrows.synSentToSynRcvd.setAttribute('x1', getLeftCenter(states.synSent).x);
-            arrows.synSentToSynRcvd.setAttribute('y1', getLeftCenter(states.synSent).y);
-            arrows.synSentToSynRcvd.setAttribute('x2', getRightCenter(states.synRcvd).x);
-            arrows.synSentToSynRcvd.setAttribute('y2', getRightCenter(states.synRcvd).y);
+            arrows.synSentToSynRcvd.setAttribute('x1', getLeftCenter(states.synSent.element).x);
+            arrows.synSentToSynRcvd.setAttribute('y1', getLeftCenter(states.synSent.element).y);
+            arrows.synSentToSynRcvd.setAttribute('x2', getRightCenter(states.synRcvd.element).x);
+            arrows.synSentToSynRcvd.setAttribute('y2', getRightCenter(states.synRcvd.element).y);
 
             // SYN_SENT -> ESTABLISHED
-            arrows.synSentToEstablished.setAttribute('x1', getBottomLeft(states.synSent).x);
-            arrows.synSentToEstablished.setAttribute('y1', getBottomLeft(states.synSent).y);
-            arrows.synSentToEstablished.setAttribute('x2', getTopRight(states.established).x);
-            arrows.synSentToEstablished.setAttribute('y2', getTopRight(states.established).y);
+            arrows.synSentToEstablished.setAttribute('x1', getBottomLeft(states.synSent.element).x);
+            arrows.synSentToEstablished.setAttribute('y1', getBottomLeft(states.synSent.element).y);
+            arrows.synSentToEstablished.setAttribute('x2', getTopRight(states.established.element).x);
+            arrows.synSentToEstablished.setAttribute('y2', getTopRight(states.established.element).y);
 
             // SYN_RCVD -> ESTABLISHED
-            arrows.synRcvdToEstablished.setAttribute('x1', getBottomRight(states.synRcvd).x);
-            arrows.synRcvdToEstablished.setAttribute('y1', getBottomRight(states.synRcvd).y);
-            arrows.synRcvdToEstablished.setAttribute('x2', getTopLeft(states.established).x);
-            arrows.synRcvdToEstablished.setAttribute('y2', getTopLeft(states.established).y);
+            arrows.synRcvdToEstablished.setAttribute('x1', getBottomRight(states.synRcvd.element).x);
+            arrows.synRcvdToEstablished.setAttribute('y1', getBottomRight(states.synRcvd.element).y);
+            arrows.synRcvdToEstablished.setAttribute('x2', getTopLeft(states.established.element).x);
+            arrows.synRcvdToEstablished.setAttribute('y2', getTopLeft(states.established.element).y);
 
             // ESTABLISHED -> FIN_WAIT_1
-            arrows.establishedToFinWait1.setAttribute('x1', getBottomLeft(states.established).x);
-            arrows.establishedToFinWait1.setAttribute('y1', getBottomLeft(states.established).y);
-            arrows.establishedToFinWait1.setAttribute('x2', getTopRight(states.finWait1).x);
-            arrows.establishedToFinWait1.setAttribute('y2', getTopRight(states.finWait1).y);
+            arrows.establishedToFinWait1.setAttribute('x1', getBottomLeft(states.established.element).x);
+            arrows.establishedToFinWait1.setAttribute('y1', getBottomLeft(states.established.element).y);
+            arrows.establishedToFinWait1.setAttribute('x2', getTopRight(states.finWait1.element).x);
+            arrows.establishedToFinWait1.setAttribute('y2', getTopRight(states.finWait1.element).y);
 
             // ESTABLISHED -> CLOSE_WAIT
-            arrows.establishedToCloseWait.setAttribute('x1', getBottomRight(states.established).x);
-            arrows.establishedToCloseWait.setAttribute('y1', getBottomRight(states.established).y);
-            arrows.establishedToCloseWait.setAttribute('x2', getTopLeft(states.closeWait).x);
-            arrows.establishedToCloseWait.setAttribute('y2', getTopLeft(states.closeWait).y);
+            arrows.establishedToCloseWait.setAttribute('x1', getBottomRight(states.established.element).x);
+            arrows.establishedToCloseWait.setAttribute('y1', getBottomRight(states.established.element).y);
+            arrows.establishedToCloseWait.setAttribute('x2', getTopLeft(states.closeWait.element).x);
+            arrows.establishedToCloseWait.setAttribute('y2', getTopLeft(states.closeWait.element).y);
 
             // SYN_RCVD -> FIN_WAIT_1
-            arrows.synRcvdToFinWait1.setAttribute('x1', getBottomCenter(states.synRcvd).x);
-            arrows.synRcvdToFinWait1.setAttribute('y1', getBottomCenter(states.synRcvd).y);
-            arrows.synRcvdToFinWait1.setAttribute('x2', getTopCenter(states.finWait1).x);
-            arrows.synRcvdToFinWait1.setAttribute('y2', getTopCenter(states.finWait1).y);
+            arrows.synRcvdToFinWait1.setAttribute('x1', getBottomCenter(states.synRcvd.element).x);
+            arrows.synRcvdToFinWait1.setAttribute('y1', getBottomCenter(states.synRcvd.element).y);
+            arrows.synRcvdToFinWait1.setAttribute('x2', getTopCenter(states.finWait1.element).x);
+            arrows.synRcvdToFinWait1.setAttribute('y2', getTopCenter(states.finWait1.element).y);
 
             // FIN_WAIT_1 -> FIN_WAIT_2
-            arrows.finWait1ToFinWait2.setAttribute('x1', getBottomCenter(states.finWait1).x);
-            arrows.finWait1ToFinWait2.setAttribute('y1', getBottomCenter(states.finWait1).y);
-            arrows.finWait1ToFinWait2.setAttribute('x2', getTopCenter(states.finWait2).x);
-            arrows.finWait1ToFinWait2.setAttribute('y2', getTopCenter(states.finWait2).y);
+            arrows.finWait1ToFinWait2.setAttribute('x1', getBottomCenter(states.finWait1.element).x);
+            arrows.finWait1ToFinWait2.setAttribute('y1', getBottomCenter(states.finWait1.element).y);
+            arrows.finWait1ToFinWait2.setAttribute('x2', getTopCenter(states.finWait2.element).x);
+            arrows.finWait1ToFinWait2.setAttribute('y2', getTopCenter(states.finWait2.element).y);
 
             // FIN_WAIT_1 -> CLOSING
-            arrows.finWait1ToClosing.setAttribute('x1', getRightCenter(states.finWait1).x);
-            arrows.finWait1ToClosing.setAttribute('y1', getRightCenter(states.finWait1).y);
-            arrows.finWait1ToClosing.setAttribute('x2', getLeftCenter(states.closing).x);
-            arrows.finWait1ToClosing.setAttribute('y2', getLeftCenter(states.closing).y);
+            arrows.finWait1ToClosing.setAttribute('x1', getRightCenter(states.finWait1.element).x);
+            arrows.finWait1ToClosing.setAttribute('y1', getRightCenter(states.finWait1.element).y);
+            arrows.finWait1ToClosing.setAttribute('x2', getLeftCenter(states.closing.element).x);
+            arrows.finWait1ToClosing.setAttribute('y2', getLeftCenter(states.closing.element).y);
 
             // FIN_WAIT_1 -> TIME_WAIT
-            arrows.finWait1ToTimeWait.setAttribute('x1', getBottomRight(states.finWait1).x);
-            arrows.finWait1ToTimeWait.setAttribute('y1', getBottomRight(states.finWait1).y);
-            arrows.finWait1ToTimeWait.setAttribute('x2', getTopLeft(states.timeWait).x);
-            arrows.finWait1ToTimeWait.setAttribute('y2', getTopLeft(states.timeWait).y);
+            arrows.finWait1ToTimeWait.setAttribute('x1', getBottomRight(states.finWait1.element).x);
+            arrows.finWait1ToTimeWait.setAttribute('y1', getBottomRight(states.finWait1.element).y);
+            arrows.finWait1ToTimeWait.setAttribute('x2', getTopLeft(states.timeWait.element).x);
+            arrows.finWait1ToTimeWait.setAttribute('y2', getTopLeft(states.timeWait.element).y);
 
             // FIN_WAIT_2 -> TIME_WAIT
-            arrows.finWait2ToTimeWait.setAttribute('x1', getRightCenter(states.finWait2).x);
-            arrows.finWait2ToTimeWait.setAttribute('y1', getRightCenter(states.finWait2).y);
-            arrows.finWait2ToTimeWait.setAttribute('x2', getLeftCenter(states.timeWait).x);
-            arrows.finWait2ToTimeWait.setAttribute('y2', getLeftCenter(states.timeWait).y);
+            arrows.finWait2ToTimeWait.setAttribute('x1', getRightCenter(states.finWait2.element).x);
+            arrows.finWait2ToTimeWait.setAttribute('y1', getRightCenter(states.finWait2.element).y);
+            arrows.finWait2ToTimeWait.setAttribute('x2', getLeftCenter(states.timeWait.element).x);
+            arrows.finWait2ToTimeWait.setAttribute('y2', getLeftCenter(states.timeWait.element).y);
 
             // CLOSING -> TIME_WAIT
-            arrows.closingToTimeWait.setAttribute('x1', getBottomCenter(states.closing).x);
-            arrows.closingToTimeWait.setAttribute('y1', getBottomCenter(states.closing).y);
-            arrows.closingToTimeWait.setAttribute('x2', getTopCenter(states.timeWait).x);
-            arrows.closingToTimeWait.setAttribute('y2', getTopCenter(states.timeWait).y);
+            arrows.closingToTimeWait.setAttribute('x1', getBottomCenter(states.closing.element).x);
+            arrows.closingToTimeWait.setAttribute('y1', getBottomCenter(states.closing.element).y);
+            arrows.closingToTimeWait.setAttribute('x2', getTopCenter(states.timeWait.element).x);
+            arrows.closingToTimeWait.setAttribute('y2', getTopCenter(states.timeWait.element).y);
 
             // CLOSED -> SYN_SENT
-            arrows.closedToSynSent.setAttribute('x1', getBottomRight(states.closed).x);
-            arrows.closedToSynSent.setAttribute('y1', getBottomRight(states.closed).y);
-            arrows.closedToSynSent.setAttribute('x2', getTopCenter(states.synSent).x);
-            arrows.closedToSynSent.setAttribute('y2', getTopCenter(states.synSent).y);
+            arrows.closedToSynSent.setAttribute('x1', getBottomRight(states.closed.element).x);
+            arrows.closedToSynSent.setAttribute('y1', getBottomRight(states.closed.element).y);
+            arrows.closedToSynSent.setAttribute('x2', getTopCenter(states.synSent.element).x);
+            arrows.closedToSynSent.setAttribute('y2', getTopCenter(states.synSent.element).y);
 
             // CLOSE_WAIT -> LAST_ACK
-            arrows.closeWaitToLastAck.setAttribute('x1', getBottomCenter(states.closeWait).x);
-            arrows.closeWaitToLastAck.setAttribute('y1', getBottomCenter(states.closeWait).y);
-            arrows.closeWaitToLastAck.setAttribute('x2', getTopCenter(states.lastAck).x);
-            arrows.closeWaitToLastAck.setAttribute('y2', getTopCenter(states.lastAck).y);
+            arrows.closeWaitToLastAck.setAttribute('x1', getBottomCenter(states.closeWait.element).x);
+            arrows.closeWaitToLastAck.setAttribute('y1', getBottomCenter(states.closeWait.element).y);
+            arrows.closeWaitToLastAck.setAttribute('x2', getTopCenter(states.lastAck.element).x);
+            arrows.closeWaitToLastAck.setAttribute('y2', getTopCenter(states.lastAck.element).y);
 
             // TIME_WAIT -> CLOSED
-            arrows.timeWaitToClosed.setAttribute('x1', getRightCenter(states.timeWait).x);
-            arrows.timeWaitToClosed.setAttribute('y1', getRightCenter(states.timeWait).y);
-            arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait).y);
+            arrows.timeWaitToClosed.setAttribute('x1', getRightCenter(states.timeWait.element).x);
+            arrows.timeWaitToClosed.setAttribute('y1', getRightCenter(states.timeWait.element).y);
+            arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait.element).y);
 
             // LAST_ACK -> CLOSED
-            arrows.lastAckToClosed.setAttribute('x1', getRightCenter(states.lastAck).x);
-            arrows.lastAckToClosed.setAttribute('y1', getRightCenter(states.lastAck).y);
-            arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck).y);
+            arrows.lastAckToClosed.setAttribute('x1', getRightCenter(states.lastAck.element).x);
+            arrows.lastAckToClosed.setAttribute('y1', getRightCenter(states.lastAck.element).y);
+            arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck.element).y);
 
             // SYN_SENT -> CLOSED
-            arrows.synSentToClosed.setAttribute('x1', getRightCenter(states.synSent).x);
-            arrows.synSentToClosed.setAttribute('y1', getRightCenter(states.synSent).y);
-            arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent).y);
+            arrows.synSentToClosed.setAttribute('x1', getRightCenter(states.synSent.element).x);
+            arrows.synSentToClosed.setAttribute('y1', getRightCenter(states.synSent.element).y);
+            arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent.element).y);
 
-            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent).x + 200);
-            arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed).y);
-            arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed).x);
-            arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed).y);
+            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed.element).y);
+            arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed.element).x);
+            arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed.element).y);
 
-            arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent).x + 200);
-            arrows.vertical_common_line.setAttribute('y1', getRightCenter(states.timeWait).y);
-            arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed).y);
+            arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.vertical_common_line.setAttribute('y1', getRightCenter(states.timeWait.element).y);
+            arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed.element).y);
         }
 
         // Initial update

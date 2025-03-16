@@ -129,7 +129,7 @@
             <div class="stack tcp">TCP</div>
             <div class="stack ip">IP</div>
             <div class="stack datalink">Data Link</div>
-            <div id="serverStatus" class="status">CLOSED</div>
+            <div id="serverStatus" class="status">LISTEN</div>
         </div>
         
         <div class="device" id="tcpcopy">
@@ -143,7 +143,7 @@
             <div class="stack tcp">TCP</div>
             <div class="stack ip">IP</div>
             <div class="stack datalink">Data Link</div>
-            <div id="targetServerStatus" class="status">CLOSED</div>
+            <div id="targetServerStatus" class="status">LISTEN</div>
         </div>
         
         <div class="device" id="assistant-server">
@@ -182,8 +182,8 @@
 
             console.log("Handshake started!");
             document.getElementById("clientStatus").innerText = "CLOSED";
-            document.getElementById("serverStatus").innerText = "CLOSED";
-            document.getElementById("targetServerStatus").innerText = "CLOSED";
+            document.getElementById("serverStatus").innerText = "LISTEN";
+            document.getElementById("targetServerStatus").innerText = "LISTEN";
             
             const clientAppRect = document.querySelector("#client .app").getBoundingClientRect();
             const clientTCPRect = document.querySelector("#client .tcp").getBoundingClientRect();
@@ -214,7 +214,6 @@
             let tl = gsap.timeline();
 
             document.getElementById("clientStatus").innerText = "SYN_SENT";
-            document.getElementById("serverStatus").innerText = "CLOSED";
             
             tl.to(synPacket, { duration: 1, top: clientIPRect.top})
               .to(synPacket, { duration: 1, top: clientDatalinkRect.top + 100 })

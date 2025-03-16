@@ -50,7 +50,7 @@
             <div class="stack tcp">TCP</div>
             <div class="stack ip">IP</div>
             <div class="stack datalink">Data Link</div>
-            <div id="serverStatus" class="status">CLOSED</div>
+            <div id="serverStatus" class="status">LISTEN</div>
         </div>
     </div>
 
@@ -98,7 +98,7 @@
             let tl = gsap.timeline();
 
             document.getElementById("clientStatus").innerText = "SYNC_SENT";
-            document.getElementById("serverStatus").innerText = "CLOSED";
+            document.getElementById("serverStatus").innerText = "LISTEN";
             
             // SYN Packet Movement (Client -> Router -> Server)
             tl.to(synPacket, { duration: 1, top: clientIPRect.top}) // TCP -> IP
