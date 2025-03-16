@@ -86,6 +86,10 @@
             border: none; 
             border-radius: 5px; 
         }
+        .btn:disabled { 
+            background-color: #ccc; 
+            cursor: not-allowed; 
+        }
         .btn-container { 
             margin-top: 200px; 
         }
@@ -168,11 +172,14 @@
     <div id="ackPacket2" class="packet test" style="display: none;">ACK</div>
     
     <div class="btn-container">
-        <button class="btn" onclick="startTCPHandshake()">Start Handshake</button>
+        <button class="btn" id="startBtn" onclick="startTCPHandshake()">Start Handshake</button>
     </div>
     
     <script>
         function startTCPHandshake() {
+            const startBtn = document.getElementById("startBtn");
+            startBtn.disabled = true; // Disable the button
+
             console.log("Handshake started!");
             document.getElementById("clientStatus").innerText = "CLOSED";
             document.getElementById("serverStatus").innerText = "CLOSED";
@@ -365,6 +372,7 @@
               .to("#ackPacket2", { duration: 1, top: targetServerTCPRect.top, onComplete: () => {
                   document.getElementById("targetServerStatus").innerText = "ESTABLISHED";
                   gsap.set("#ackPacket2", { display: "none" });
+                  startBtn.disabled = false; // Re-enable the button
               }});    
         }
     </script>
