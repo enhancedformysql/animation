@@ -33,6 +33,12 @@
             text-align: center;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
+        }
+
+        .state.active {
+            background-color: #4CAF50; /* Green background for active state */
+            color: white; /* White text for better contrast */
         }
 
         svg {
@@ -49,12 +55,11 @@
             stroke-width: 2;
             marker-end: url(#arrowhead);
         }
-        
+
         .common_line {
             stroke: #333;
             stroke-width: 2;
         }
-        
     </style>
 </head>
 <body>
@@ -71,7 +76,7 @@
         <div id="finWait2" class="state" style="left: 300px; top: 600px;">FIN_WAIT_2</div>
         <div id="timeWait" class="state" style="left: 500px; top: 600px;">TIME_WAIT</div>
         <div id="lastAck" class="state" style="left: 700px; top: 550px;">LAST_ACK</div>
-        
+
         <!-- SVG Canvas -->
         <svg>
             <!-- Arrowhead Definition -->
@@ -119,10 +124,8 @@
             <!-- TIME_WAIT -> CLOSED -->
             <line id="timeWaitToClosed" class="arrow"></line>
 
-            <line id="vertical_common_line" class="common_line"></line>
-
-            <line id="commonToClosed" class="arrow"></line>            
-      
+            <line id="vertical_common_line" class="arrow"></line>
+            <line id="commonToClosed" class="arrow"></line>
         </svg>
     </div>
 
@@ -141,6 +144,19 @@
             lastAck: document.getElementById('lastAck'),
             timeWait: document.getElementById('timeWait')
         };
+
+        // Add click event listeners to all states
+        Object.values(states).forEach(state => {
+            state.addEventListener('click', () => {
+                // Remove active class from all states
+                Object.values(states).forEach(s => s.classList.remove('active'));
+                // Add active class to the clicked state
+                state.classList.add('active');
+                // Log the state for debugging
+                console.log(`Clicked state: ${state.textContent}`);
+                // TODO: Add animation logic here
+            });
+        });
 
         // Get all arrows
         const arrows = {
@@ -161,10 +177,9 @@
             closeWaitToLastAck: document.getElementById('closeWaitToLastAck'),
             synSentToClosed: document.getElementById('synSentToClosed'),
             lastAckToClosed: document.getElementById('lastAckToClosed'),
-            timeWaitToClosed: document.getElementById('timeWaitToClosed'),         
+            timeWaitToClosed: document.getElementById('timeWaitToClosed'),
             vertical_common_line: document.getElementById('vertical_common_line'),
             commonToClosed: document.getElementById('commonToClosed')
-            
         };
 
         // Calculate the bottom center of a state node
@@ -186,23 +201,23 @@
         }
 
         // Calculate the right center of a state node
-				function getRightCenter(element) {
-				    const rect = element.getBoundingClientRect();
-				    return {
-				        x: rect.right,
-				        y: rect.top + rect.height / 2
-				    };
-				}
-				
+        function getRightCenter(element) {
+            const rect = element.getBoundingClientRect();
+            return {
+                x: rect.right,
+                y: rect.top + rect.height / 2
+            };
+        }
+
         // Calculate the left center of a state node
         function getLeftCenter(element) {
-				    const rect = element.getBoundingClientRect();
-				    return {
-				        x: rect.left,
-				        y: rect.top + rect.height / 2
-				    };
+            const rect = element.getBoundingClientRect();
+            return {
+                x: rect.left,
+                y: rect.top + rect.height / 2
+            };
         }
-        
+
         // Function to get top-left corner
         function getTopLeft(element) {
             const rect = element.getBoundingClientRect();
@@ -238,8 +253,7 @@
                 y: rect.bottom
             };
         }
-        
-        
+
         // Update arrow positions
         function updateArrows() {
             // CLOSED -> LISTEN
@@ -259,7 +273,7 @@
             arrows.synSentToSynRcvd.setAttribute('y1', getLeftCenter(states.synSent).y);
             arrows.synSentToSynRcvd.setAttribute('x2', getRightCenter(states.synRcvd).x);
             arrows.synSentToSynRcvd.setAttribute('y2', getRightCenter(states.synRcvd).y);
-            
+
             // SYN_SENT -> ESTABLISHED
             arrows.synSentToEstablished.setAttribute('x1', getBottomLeft(states.synSent).x);
             arrows.synSentToEstablished.setAttribute('y1', getBottomLeft(states.synSent).y);
@@ -272,26 +286,24 @@
             arrows.synRcvdToEstablished.setAttribute('x2', getTopLeft(states.established).x);
             arrows.synRcvdToEstablished.setAttribute('y2', getTopLeft(states.established).y);
 
-
             // ESTABLISHED -> FIN_WAIT_1
             arrows.establishedToFinWait1.setAttribute('x1', getBottomLeft(states.established).x);
             arrows.establishedToFinWait1.setAttribute('y1', getBottomLeft(states.established).y);
             arrows.establishedToFinWait1.setAttribute('x2', getTopRight(states.finWait1).x);
             arrows.establishedToFinWait1.setAttribute('y2', getTopRight(states.finWait1).y);
-                 
+
             // ESTABLISHED -> CLOSE_WAIT
             arrows.establishedToCloseWait.setAttribute('x1', getBottomRight(states.established).x);
             arrows.establishedToCloseWait.setAttribute('y1', getBottomRight(states.established).y);
             arrows.establishedToCloseWait.setAttribute('x2', getTopLeft(states.closeWait).x);
             arrows.establishedToCloseWait.setAttribute('y2', getTopLeft(states.closeWait).y);
 
-                     
             // SYN_RCVD -> FIN_WAIT_1
             arrows.synRcvdToFinWait1.setAttribute('x1', getBottomCenter(states.synRcvd).x);
             arrows.synRcvdToFinWait1.setAttribute('y1', getBottomCenter(states.synRcvd).y);
             arrows.synRcvdToFinWait1.setAttribute('x2', getTopCenter(states.finWait1).x);
-            arrows.synRcvdToFinWait1.setAttribute('y2', getTopCenter(states.finWait1).y);   
-            
+            arrows.synRcvdToFinWait1.setAttribute('y2', getTopCenter(states.finWait1).y);
+
             // FIN_WAIT_1 -> FIN_WAIT_2
             arrows.finWait1ToFinWait2.setAttribute('x1', getBottomCenter(states.finWait1).x);
             arrows.finWait1ToFinWait2.setAttribute('y1', getBottomCenter(states.finWait1).y);
@@ -309,7 +321,7 @@
             arrows.finWait1ToTimeWait.setAttribute('y1', getBottomRight(states.finWait1).y);
             arrows.finWait1ToTimeWait.setAttribute('x2', getTopLeft(states.timeWait).x);
             arrows.finWait1ToTimeWait.setAttribute('y2', getTopLeft(states.timeWait).y);
-            
+
             // FIN_WAIT_2 -> TIME_WAIT
             arrows.finWait2ToTimeWait.setAttribute('x1', getRightCenter(states.finWait2).x);
             arrows.finWait2ToTimeWait.setAttribute('y1', getRightCenter(states.finWait2).y);
@@ -322,13 +334,12 @@
             arrows.closingToTimeWait.setAttribute('x2', getTopCenter(states.timeWait).x);
             arrows.closingToTimeWait.setAttribute('y2', getTopCenter(states.timeWait).y);
 
-
             // CLOSED -> SYN_SENT
             arrows.closedToSynSent.setAttribute('x1', getBottomRight(states.closed).x);
             arrows.closedToSynSent.setAttribute('y1', getBottomRight(states.closed).y);
             arrows.closedToSynSent.setAttribute('x2', getTopCenter(states.synSent).x);
             arrows.closedToSynSent.setAttribute('y2', getTopCenter(states.synSent).y);
-                   
+
             // CLOSE_WAIT -> LAST_ACK
             arrows.closeWaitToLastAck.setAttribute('x1', getBottomCenter(states.closeWait).x);
             arrows.closeWaitToLastAck.setAttribute('y1', getBottomCenter(states.closeWait).y);
@@ -339,30 +350,29 @@
             arrows.timeWaitToClosed.setAttribute('x1', getRightCenter(states.timeWait).x);
             arrows.timeWaitToClosed.setAttribute('y1', getRightCenter(states.timeWait).y);
             arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait).y);                  
+            arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait).y);
 
             // LAST_ACK -> CLOSED
             arrows.lastAckToClosed.setAttribute('x1', getRightCenter(states.lastAck).x);
             arrows.lastAckToClosed.setAttribute('y1', getRightCenter(states.lastAck).y);
             arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck).y);    
-            
+            arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck).y);
+
             // SYN_SENT -> CLOSED
             arrows.synSentToClosed.setAttribute('x1', getRightCenter(states.synSent).x);
             arrows.synSentToClosed.setAttribute('y1', getRightCenter(states.synSent).y);
             arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent).y);    
-
+            arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent).y);
 
             arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent).x + 200);
             arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed).y);
             arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed).x);
-            arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed).y);                      
-            
+            arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed).y);
+
             arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent).x + 200);
             arrows.vertical_common_line.setAttribute('y1', getRightCenter(states.timeWait).y);
             arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent).x + 200);
-            arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed).y);              
+            arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed).y);
         }
 
         // Initial update
