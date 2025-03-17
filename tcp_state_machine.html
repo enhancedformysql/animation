@@ -80,8 +80,8 @@
         
         .rst-notification {
             position: fixed;
-            bottom: 30px;
-            left: 50%;
+            bottom: 100px;
+            left: 40%;
             transform: translateX(-50%);
             background-color: #fff3cd;
             color: #856404;
@@ -257,38 +257,6 @@
     <button id="open-page-lost-button">Packet Loss Case</button>
       
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const openPageButton = document.getElementById("open-page-reset-button");
-        
-            // Set coordinates based on window size
-            const topPosition = window.innerHeight * 0.88; 
-            const leftPosition = window.innerWidth * 0.76;
-        
-            openPageButton.style.top = `${topPosition}px`;
-            openPageButton.style.left = `${leftPosition}px`;
-        
-            // Open new page on button click
-            openPageButton.addEventListener("click", function() {
-                window.open('elb_timeout.html', '_blank');
-            });
-        });
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const openPageButton = document.getElementById("open-page-lost-button");
-        
-            // Set coordinates based on window size
-            const topPosition = window.innerHeight * 0.92; 
-            const leftPosition = window.innerWidth * 0.76; 
-        
-            openPageButton.style.top = `${topPosition}px`;
-            openPageButton.style.left = `${leftPosition}px`;
-        
-            // Open new page on button click
-            openPageButton.addEventListener("click", function() {
-                window.open('handshake_with_lost.html', '_blank');
-            });
-        });
-
         // Get all state nodes
         const states = {
             closed: {
@@ -466,6 +434,7 @@
             timeWaitToClosed_recv: document.getElementById('timeWaitToClosedText_recv'),
             timeWaitToClosed_send: document.getElementById('timeWaitToClosedText_send')
         };
+        
 
         // Calculate the bottom center of a state node
         function getBottomCenter(element) {
@@ -844,6 +813,40 @@
         // Initial update
         updateArrows();
 
+        const right_most_x1 = parseFloat(arrows.vertical_common_line.getAttribute('x1'));
+        const right_most_y1 = parseFloat(arrows.vertical_common_line.getAttribute('y1'));
+
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            const openPageButton = document.getElementById("open-page-reset-button");
+        
+            const topPosition = right_most_y1 + 50; 
+            const leftPosition = right_most_x1 + 100;
+        
+            openPageButton.style.top = `${topPosition}px`;
+            openPageButton.style.left = `${leftPosition}px`;
+        
+            // Open new page on button click
+            openPageButton.addEventListener("click", function() {
+                window.open('elb_timeout.html', '_blank');
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const openPageButton = document.getElementById("open-page-lost-button");
+        
+            const topPosition = right_most_y1 + 85; 
+            const leftPosition = right_most_x1 + 100;        
+            openPageButton.style.top = `${topPosition}px`;
+            openPageButton.style.left = `${leftPosition}px`;
+        
+            // Open new page on button click
+            openPageButton.addEventListener("click", function() {
+                window.open('handshake_with_lost.html', '_blank');
+            });
+        });
+        
+        
         // Listen for window resize events
         window.addEventListener('resize', updateArrows);
     </script>
