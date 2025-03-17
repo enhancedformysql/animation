@@ -89,6 +89,8 @@
     <div id="synPacket" class="packet">SYN -></div>
     <div id="synAckPacket" class="packet"><- SYN-ACK</div>
     <div id="ackPacket" class="packet">ACK -></div>
+    <div id="synAckRetransmit" class="packet"><- SYN-ACK (Retransmit)</div>
+    <div id="ackRetransmit" class="packet">ACK -> </div>
 
     <script>
         function updateState(element, text) {
@@ -105,31 +107,48 @@
             let syn = document.getElementById("synPacket");
             let synAck = document.getElementById("synAckPacket");
             let ack = document.getElementById("ackPacket");
+            let synAckRetransmit = document.getElementById("synAckRetransmit");
+            let ackRetransmit = document.getElementById("ackRetransmit");
 
             // Step 1: Client sends SYN ¡ú Server
             updateState("clientState", "SYN_SENT");
             clientBox.className = "box syn";
             gsap.set(syn, { visibility: "visible", x: clientX, y: -50 });
-            gsap.to(syn, { x: serverX, duration: 2, onComplete: function() {
+            gsap.to(syn, { x: serverX, duration: 6, onComplete: function() {
                 gsap.set(syn, { visibility: "hidden" });
 
                 // Step 2: Server receives SYN, sends SYN-ACK
                 updateState("serverState", "SYN_RCVD");
                 serverBox.className = "box syn";
                 gsap.set(synAck, { visibility: "visible", x: serverX, y: -50 });
-                gsap.to(synAck, { x: clientX, duration: 2, onComplete: function() {
+                gsap.to(synAck, { x: clientX, duration: 6, onComplete: function() {
                     gsap.set(synAck, { visibility: "hidden" });
 
-                    // Step 3: Client receives SYN-ACK, sends ACK
+                    // Step 3: Client receives SYN-ACK, sends ACK (Packet Lost)
                     updateState("clientState", "ESTABLISHED");
                     clientBox.className = "box established";
                     gsap.set(ack, { visibility: "visible", x: clientX, y: -50 });
-                    gsap.to(ack, { x: serverX, duration: 2, onComplete: function() {
+                    gsap.to(ack, { x: serverX / 2, duration: 2, onComplete: function() {
                         gsap.set(ack, { visibility: "hidden" });
 
-                        // Step 4: Server receives ACK, connection established
-                        updateState("serverState", "ESTABLISHED");
-                        serverBox.className = "box established";
+                        // Simulating ACK Packet Loss (No state change on Server)
+                        setTimeout(function() {
+                            // Step 4: Server retransmits SYN-ACK
+                            gsap.set(synAckRetransmit, { visibility: "visible", x: serverX, y: -50 });
+                            gsap.to(synAckRetransmit, { x: clientX, duration: 5, onComplete: function() {
+                                gsap.set(synAckRetransmit, { visibility: "hidden" });
+
+                                // Step 5: Client receives retransmitted SYN-ACK, sends ACK again
+                                gsap.set(ackRetransmit, { visibility: "visible", x: clientX, y: -50 });
+                                gsap.to(ackRetransmit, { x: serverX, duration: 3, onComplete: function() {
+                                    gsap.set(ackRetransmit, { visibility: "hidden" });
+
+                                    // Step 6: Server finally establishes connection
+                                    updateState("serverState", "ESTABLISHED");
+                                    serverBox.className = "box established";
+                                }});
+                            }});
+                        }, 5000); // Delay for retransmission
                     }});
                 }});
             }});
