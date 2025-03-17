@@ -107,36 +107,25 @@
             border: 1px solid #ddd;
         }
         
-				#open-page-reset-button {
-				    position: absolute; /* Absolute positioning */
-				    padding: 10px 20px; /* Button padding */
-				    font-size: 16px;    /* Font size */
-				    background-color: orange; /* Background color */
-				    color: white;       /* Text color */
-				    border: none;       /* Remove border */
-				    border-radius: 5px; /* Rounded corners */
-				    cursor: pointer;    /* Pointer cursor */
-				}
-				
-				#open-page-reset-button:hover {
-				    background-color: #0056b3; /* Background color on hover */
-				}
-				
-				#open-page-lost-button {
-				    position: absolute; /* Absolute positioning */
-				    padding: 10px 20px; /* Button padding */
-				    font-size: 16px;    /* Font size */
-				    background-color: green; /* Background color */
-				    color: white;       /* Text color */
-				    border: none;       /* Remove border */
-				    border-radius: 5px; /* Rounded corners */
-				    cursor: pointer;    /* Pointer cursor */
-				}
-				
-				#open-page-lost-button:hover {
-				    background-color: #0056b3; /* Background color on hover */
-				}
-
+        #open-page-reset-button {
+            position: absolute;
+            width: 160px;
+            height: 30px;
+        }
+        
+        #open-page-reset-button:hover {
+            background-color: green; /* Background color on hover */
+        }
+        
+        #open-page-lost-button {
+            position: absolute;
+            width: 160px;
+            height: 30px;
+        }
+        
+        #open-page-lost-button:hover {
+            background-color: green; /* Background color on hover */
+        }
     </style>
 </head>
 <body>
@@ -260,46 +249,45 @@
         </svg>
     </div>
     
-		<div class="rst-notification">
-		    <strong>Note:</strong> The TCP state diagram must consider the impact of <code>RST</code> packets. Any TCP connection in a state other than <code>CLOSED</code> or <code>LISTEN</code> or <code>TIMEWAIT</code> will immediately transition to the <code>CLOSED</code> state upon receiving an <code>RST</code> packet.
-		</div>
+    <div class="rst-notification">
+        <strong>Note:</strong> The TCP state diagram must consider the impact of <code>RST</code> packets. Any TCP connection in a state other than <code>CLOSED</code> or <code>LISTEN</code> or <code>TIMEWAIT</code> will immediately transition to the <code>CLOSED</code> state upon receiving an <code>RST</code> packet.
+    </div>
 
     <button id="open-page-reset-button">RST Case</button>
     <button id="open-page-lost-button">Packet Loss Case</button>
       
     <script>
-				document.addEventListener("DOMContentLoaded", function() {
-				    const openPageButton = document.getElementById("open-page-reset-button");
-				
-				    // Set coordinates based on window size
-				    const topPosition = window.innerHeight * 0.75; // 75% from the top
-				    const leftPosition = window.innerWidth * 0.8; // 80% from the left
-				
-				    openPageButton.style.top = `${topPosition}px`;
-				    openPageButton.style.left = `${leftPosition}px`;
-				
-				    // Open new page on button click
-				    openPageButton.addEventListener("click", function() {
-				        window.open('elb_timeout.html', '_blank');
-				    });
-				});
+        document.addEventListener("DOMContentLoaded", function() {
+            const openPageButton = document.getElementById("open-page-reset-button");
+        
+            // Set coordinates based on window size
+            const topPosition = window.innerHeight * 0.88; 
+            const leftPosition = window.innerWidth * 0.76;
+        
+            openPageButton.style.top = `${topPosition}px`;
+            openPageButton.style.left = `${leftPosition}px`;
+        
+            // Open new page on button click
+            openPageButton.addEventListener("click", function() {
+                window.open('elb_timeout.html', '_blank');
+            });
+        });
 
-				document.addEventListener("DOMContentLoaded", function() {
-				    const openPageButton = document.getElementById("open-page-lost-button");
-				
-				    // Set coordinates based on window size
-				    const topPosition = window.innerHeight * 0.8; // 80% from the top
-				    const leftPosition = window.innerWidth * 0.8; // 80% from the left
-				
-				    openPageButton.style.top = `${topPosition}px`;
-				    openPageButton.style.left = `${leftPosition}px`;
-				
-				    // Open new page on button click
-				    openPageButton.addEventListener("click", function() {
-				        window.open('handshake_with_lost.html', '_blank');
-				    });
-				});
-				
+        document.addEventListener("DOMContentLoaded", function() {
+            const openPageButton = document.getElementById("open-page-lost-button");
+        
+            // Set coordinates based on window size
+            const topPosition = window.innerHeight * 0.92; 
+            const leftPosition = window.innerWidth * 0.76; 
+        
+            openPageButton.style.top = `${topPosition}px`;
+            openPageButton.style.left = `${leftPosition}px`;
+        
+            // Open new page on button click
+            openPageButton.addEventListener("click", function() {
+                window.open('handshake_with_lost.html', '_blank');
+            });
+        });
 
         // Get all state nodes
         const states = {
@@ -414,7 +402,7 @@
                 }
             });
         });
-
+        
         // Get all arrows
         const arrows = {
             closedToListen: document.getElementById('closedToListen'),
