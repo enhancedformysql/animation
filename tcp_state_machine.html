@@ -61,6 +61,12 @@
             stroke-width: 2;
         }
 
+        .condition-text {
+            font-family: Arial;
+            font-size: 12px;
+            fill: black;
+        }
+
         /* Animation for states */
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -70,6 +76,35 @@
 
         .state.animated {
             animation: pulse 0.5s ease-in-out;
+        }
+        
+        .rst-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+            text-align: center;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        .rst-notification strong {
+            font-weight: bold;
+        }
+
+        .rst-notification code {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
@@ -100,46 +135,103 @@
             <!-- Arrow Lines -->
             <!-- CLOSED -> LISTEN -->
             <line id="closedToListen" class="arrow"></line>
+            <text id="closedToListenText_recv" class="condition-text"></text>
+            <text id="closedToListenText_send" class="condition-text"></text>
+
             <!-- CLOSED -> SYN_SENT -->
             <line id="closedToSynSent" class="arrow"></line>
+            <text id="closedToSynSentText_recv" class="condition-text"></text>
+            <text id="closedToSynSentText_send" class="condition-text"></text>
+
             <!-- LISTEN -> SYN_RCVD -->
             <line id="listenToSynRcvd" class="arrow"></line>
+            <text id="listenToSynRcvdText_recv" class="condition-text"></text>
+            <text id="listenToSynRcvdText_send" class="condition-text"></text>
+
             <!-- SYN_SENT -> SYN_RCVD -->
             <line id="synSentToSynRcvd" class="arrow"></line>
+            <text id="synSentToSynRcvdText_recv" class="condition-text"></text>
+            <text id="synSentToSynRcvdText_send" class="condition-text"></text>
+
             <!-- SYN_SENT -> ESTABLISHED -->
             <line id="synSentToEstablished" class="arrow"></line>
+            <text id="synSentToEstablishedText_recv" class="condition-text"></text>
+            <text id="synSentToEstablishedText_send" class="condition-text"></text>
+
             <!-- SYN_RCVD -> ESTABLISHED -->
             <line id="synRcvdToEstablished" class="arrow"></line>
+            <text id="synRcvdToEstablishedText_recv" class="condition-text"></text>
+            <text id="synRcvdToEstablishedText_send" class="condition-text"></text>
+
             <!-- SYN_RCVD -> FIN_WAIT_1 -->
             <line id="synRcvdToFinWait1" class="arrow"></line>
+            <text id="synRcvdToFinWait1Text_recv" class="condition-text"></text>
+            <text id="synRcvdToFinWait1Text_send" class="condition-text"></text>
+
             <!-- ESTABLISHED -> FIN_WAIT_1 -->
             <line id="establishedToFinWait1" class="arrow"></line>
+            <text id="establishedToFinWait1Text_recv" class="condition-text"></text>
+            <text id="establishedToFinWait1Text_send" class="condition-text"></text>
+
             <!-- FIN_WAIT_1 -> FIN_WAIT_2 -->
             <line id="finWait1ToFinWait2" class="arrow"></line>
+            <text id="finWait1ToFinWait2Text_recv" class="condition-text"></text>
+            <text id="finWait1ToFinWait2Text_send" class="condition-text"></text>
+
             <!-- FIN_WAIT_1 -> CLOSING -->
             <line id="finWait1ToClosing" class="arrow"></line>
+            <text id="finWait1ToClosingText_recv" class="condition-text"></text>
+            <text id="finWait1ToClosingText_send" class="condition-text"></text>
+
             <!-- FIN_WAIT_1 -> TIME_WAIT -->
             <line id="finWait1ToTimeWait" class="arrow"></line>
+            <text id="finWait1ToTimeWaitText_recv" class="condition-text"></text>
+            <text id="finWait1ToTimeWaitText_send" class="condition-text"></text>
+
             <!-- FIN_WAIT_2 -> TIME_WAIT -->
             <line id="finWait2ToTimeWait" class="arrow"></line>
+            <text id="finWait2ToTimeWaitText_recv" class="condition-text"></text>
+            <text id="finWait2ToTimeWaitText_send" class="condition-text"></text>
+
             <!-- CLOSING -> TIME_WAIT -->
             <line id="closingToTimeWait" class="arrow"></line>
+            <text id="closingToTimeWaitText_recv" class="condition-text"></text>
+            <text id="closingToTimeWaitText_send" class="condition-text"></text>
+
             <!-- ESTABLISHED -> CLOSE_WAIT -->
             <line id="establishedToCloseWait" class="arrow"></line>
-            <!-- SYN_SENT -> CLOSED -->
-            <line id="synSentToClosed" class="arrow"></line>
+            <text id="establishedToCloseWaitText_recv" class="condition-text"></text>
+            <text id="establishedToCloseWaitText_send" class="condition-text"></text>
+
             <!-- CLOSE_WAIT -> LAST_ACK -->
             <line id="closeWaitToLastAck" class="arrow"></line>
+            <text id="closeWaitToLastAckText_recv" class="condition-text"></text>
+            <text id="closeWaitToLastAckText_send" class="condition-text"></text>
+
+            <!-- SYN_SENT -> CLOSED -->
+            <line id="synSentToClosed" class="arrow"></line>
+            <text id="synSentToClosedText_recv" class="condition-text"></text>
+            <text id="synSentToClosedText_send" class="condition-text"></text>
+
             <!-- LAST_ACK -> CLOSED -->
             <line id="lastAckToClosed" class="arrow"></line>
+            <text id="lastAckToClosedText_recv" class="condition-text"></text>
+            <text id="lastAckToClosedText_send" class="condition-text"></text>
+
             <!-- TIME_WAIT -> CLOSED -->
             <line id="timeWaitToClosed" class="arrow"></line>
+            <text id="timeWaitToClosedText_recv" class="condition-text"></text>
+            <text id="timeWaitToClosedText_send" class="condition-text"></text>
 
             <!-- Common lines -->
             <line id="vertical_common_line" class="common_line"></line>
             <line id="commonToClosed" class="arrow"></line>
         </svg>
     </div>
+    
+		<div class="rst-notification">
+		    <strong>Note:</strong> The TCP state diagram must consider the impact of <code>RST</code> packets. Any TCP connection in a state other than <code>CLOSED</code> or <code>LISTEN</code> or <code>TIMEWAIT</code> will immediately transition to the <code>CLOSED</code> state upon receiving an <code>RST</code> packet.
+		</div>
 
     <script>
         // Get all state nodes
@@ -189,7 +281,7 @@
                 callback: () => {
                     console.log('FIN_WAIT_1 state clicked');
                     animateState(states.finWait1.element);
-                    window.open('close.html', '_blank'); // Open external page
+                    window.open('tcp_normal_close.html', '_blank'); // Open external page
                 }
             },
             closing: {
@@ -197,7 +289,7 @@
                 callback: () => {
                     console.log('CLOSING state clicked');
                     animateState(states.closing.element);
-                    window.open('closing.html', '_blank'); // Open external page
+                    window.open('tcp_simultaneous_close.html', '_blank'); // Open external page
                 }
             },
             finWait2: {
@@ -205,7 +297,7 @@
                 callback: () => {
                     console.log('FIN_WAIT_2 state clicked');
                     animateState(states.finWait2.element);
-                    window.open('close.html', '_blank'); // Open external page
+                    window.open('tcp_normal_close.html', '_blank'); // Open external page
                 }
             },
             closeWait: {
@@ -213,7 +305,7 @@
                 callback: () => {
                     console.log('CLOSE_WAIT state clicked');
                     animateState(states.closeWait.element);
-                    window.open('closeWait.html', '_blank'); // Open external page
+                    window.open('tcp_abnormal_close.html', '_blank'); // Open external page
                 }
             },
             lastAck: {
@@ -221,7 +313,7 @@
                 callback: () => {
                     console.log('LAST_ACK state clicked');
                     animateState(states.lastAck.element);
-                    window.open('lastAck.html', '_blank'); // Open external page
+                    window.open('tcp_normal_close.html', '_blank'); // Open external page
                 }
             },
             timeWait: {
@@ -229,7 +321,7 @@
                 callback: () => {
                     console.log('TIME_WAIT state clicked');
                     animateState(states.timeWait.element);
-                    window.open('timeWait.html', '_blank'); // Open external page
+                    window.open('tcp_timeWait.html', '_blank'); // Open external page
                 }
             }
         };
@@ -278,6 +370,46 @@
             timeWaitToClosed: document.getElementById('timeWaitToClosed'),
             vertical_common_line: document.getElementById('vertical_common_line'),
             commonToClosed: document.getElementById('commonToClosed')
+        };
+
+        // Get all arrow text elements
+        const arrows_text = {
+            closedToListen_recv: document.getElementById('closedToListenText_recv'),
+            closedToListen_send: document.getElementById('closedToListenText_send'),
+            closedToSynSent_recv: document.getElementById('closedToSynSentText_recv'),
+            closedToSynSent_send: document.getElementById('closedToSynSentText_send'),
+            listenToSynRcvd_recv: document.getElementById('listenToSynRcvdText_recv'),
+            listenToSynRcvd_send: document.getElementById('listenToSynRcvdText_send'),
+            synSentToSynRcvd_recv: document.getElementById('synSentToSynRcvdText_recv'),
+            synSentToSynRcvd_send: document.getElementById('synSentToSynRcvdText_send'),
+            synSentToEstablished_recv: document.getElementById('synSentToEstablishedText_recv'),
+            synSentToEstablished_send: document.getElementById('synSentToEstablishedText_send'),
+            synRcvdToEstablished_recv: document.getElementById('synRcvdToEstablishedText_recv'),
+            synRcvdToEstablished_send: document.getElementById('synRcvdToEstablishedText_send'),
+            synRcvdToFinWait1_recv: document.getElementById('synRcvdToFinWait1Text_recv'),
+            synRcvdToFinWait1_send: document.getElementById('synRcvdToFinWait1Text_send'),
+            establishedToFinWait1_recv: document.getElementById('establishedToFinWait1Text_recv'),
+            establishedToFinWait1_send: document.getElementById('establishedToFinWait1Text_send'),
+            finWait1ToFinWait2_recv: document.getElementById('finWait1ToFinWait2Text_recv'),
+            finWait1ToFinWait2_send: document.getElementById('finWait1ToFinWait2Text_send'),
+            finWait1ToClosing_recv: document.getElementById('finWait1ToClosingText_recv'),
+            finWait1ToClosing_send: document.getElementById('finWait1ToClosingText_send'),
+            finWait1ToTimeWait_recv: document.getElementById('finWait1ToTimeWaitText_recv'),
+            finWait1ToTimeWait_send: document.getElementById('finWait1ToTimeWaitText_send'),
+            finWait2ToTimeWait_recv: document.getElementById('finWait2ToTimeWaitText_recv'),
+            finWait2ToTimeWait_send: document.getElementById('finWait2ToTimeWaitText_send'),
+            closingToTimeWait_recv: document.getElementById('closingToTimeWaitText_recv'),
+            closingToTimeWait_send: document.getElementById('closingToTimeWaitText_send'),
+            establishedToCloseWait_recv: document.getElementById('establishedToCloseWaitText_recv'),
+            establishedToCloseWait_send: document.getElementById('establishedToCloseWaitText_send'),
+            closeWaitToLastAck_recv: document.getElementById('closeWaitToLastAckText_recv'),
+            closeWaitToLastAck_send: document.getElementById('closeWaitToLastAckText_send'),
+            synSentToClosed_recv: document.getElementById('synSentToClosedText_recv'),
+            synSentToClosed_send: document.getElementById('synSentToClosedText_send'),
+            lastAckToClosed_recv: document.getElementById('lastAckToClosedText_recv'),
+            lastAckToClosed_send: document.getElementById('lastAckToClosedText_send'),
+            timeWaitToClosed_recv: document.getElementById('timeWaitToClosedText_recv'),
+            timeWaitToClosed_send: document.getElementById('timeWaitToClosedText_send')
         };
 
         // Calculate the bottom center of a state node
@@ -352,85 +484,23 @@
             };
         }
 
-        // Update arrow positions
+        // Update arrow positions and text
         function updateArrows() {
             // CLOSED -> LISTEN
             arrows.closedToListen.setAttribute('x1', getBottomCenter(states.closed.element).x);
             arrows.closedToListen.setAttribute('y1', getBottomCenter(states.closed.element).y);
             arrows.closedToListen.setAttribute('x2', getTopCenter(states.listen.element).x);
             arrows.closedToListen.setAttribute('y2', getTopCenter(states.listen.element).y);
+            
+            const closedToListenX = (parseFloat(arrows.closedToListen.getAttribute('x1')) + parseFloat(arrows.closedToListen.getAttribute('x2'))) / 2;
+            const closedToListenY = (parseFloat(arrows.closedToListen.getAttribute('y1')) + parseFloat(arrows.closedToListen.getAttribute('y2'))) / 2;
 
-            // LISTEN -> SYN_RCVD
-            arrows.listenToSynRcvd.setAttribute('x1', getLeftCenter(states.listen.element).x);
-            arrows.listenToSynRcvd.setAttribute('y1', getLeftCenter(states.listen.element).y);
-            arrows.listenToSynRcvd.setAttribute('x2', getTopRight(states.synRcvd.element).x);
-            arrows.listenToSynRcvd.setAttribute('y2', getTopRight(states.synRcvd.element).y);
-
-            // SYN_SENT -> SYN_RCVD
-            arrows.synSentToSynRcvd.setAttribute('x1', getLeftCenter(states.synSent.element).x);
-            arrows.synSentToSynRcvd.setAttribute('y1', getLeftCenter(states.synSent.element).y);
-            arrows.synSentToSynRcvd.setAttribute('x2', getRightCenter(states.synRcvd.element).x);
-            arrows.synSentToSynRcvd.setAttribute('y2', getRightCenter(states.synRcvd.element).y);
-
-            // SYN_SENT -> ESTABLISHED
-            arrows.synSentToEstablished.setAttribute('x1', getBottomLeft(states.synSent.element).x);
-            arrows.synSentToEstablished.setAttribute('y1', getBottomLeft(states.synSent.element).y);
-            arrows.synSentToEstablished.setAttribute('x2', getTopRight(states.established.element).x);
-            arrows.synSentToEstablished.setAttribute('y2', getTopRight(states.established.element).y);
-
-            // SYN_RCVD -> ESTABLISHED
-            arrows.synRcvdToEstablished.setAttribute('x1', getBottomRight(states.synRcvd.element).x);
-            arrows.synRcvdToEstablished.setAttribute('y1', getBottomRight(states.synRcvd.element).y);
-            arrows.synRcvdToEstablished.setAttribute('x2', getTopLeft(states.established.element).x);
-            arrows.synRcvdToEstablished.setAttribute('y2', getTopLeft(states.established.element).y);
-
-            // ESTABLISHED -> FIN_WAIT_1
-            arrows.establishedToFinWait1.setAttribute('x1', getBottomLeft(states.established.element).x);
-            arrows.establishedToFinWait1.setAttribute('y1', getBottomLeft(states.established.element).y);
-            arrows.establishedToFinWait1.setAttribute('x2', getTopRight(states.finWait1.element).x);
-            arrows.establishedToFinWait1.setAttribute('y2', getTopRight(states.finWait1.element).y);
-
-            // ESTABLISHED -> CLOSE_WAIT
-            arrows.establishedToCloseWait.setAttribute('x1', getBottomRight(states.established.element).x);
-            arrows.establishedToCloseWait.setAttribute('y1', getBottomRight(states.established.element).y);
-            arrows.establishedToCloseWait.setAttribute('x2', getTopLeft(states.closeWait.element).x);
-            arrows.establishedToCloseWait.setAttribute('y2', getTopLeft(states.closeWait.element).y);
-
-            // SYN_RCVD -> FIN_WAIT_1
-            arrows.synRcvdToFinWait1.setAttribute('x1', getBottomCenter(states.synRcvd.element).x);
-            arrows.synRcvdToFinWait1.setAttribute('y1', getBottomCenter(states.synRcvd.element).y);
-            arrows.synRcvdToFinWait1.setAttribute('x2', getTopCenter(states.finWait1.element).x);
-            arrows.synRcvdToFinWait1.setAttribute('y2', getTopCenter(states.finWait1.element).y);
-
-            // FIN_WAIT_1 -> FIN_WAIT_2
-            arrows.finWait1ToFinWait2.setAttribute('x1', getBottomCenter(states.finWait1.element).x);
-            arrows.finWait1ToFinWait2.setAttribute('y1', getBottomCenter(states.finWait1.element).y);
-            arrows.finWait1ToFinWait2.setAttribute('x2', getTopCenter(states.finWait2.element).x);
-            arrows.finWait1ToFinWait2.setAttribute('y2', getTopCenter(states.finWait2.element).y);
-
-            // FIN_WAIT_1 -> CLOSING
-            arrows.finWait1ToClosing.setAttribute('x1', getRightCenter(states.finWait1.element).x);
-            arrows.finWait1ToClosing.setAttribute('y1', getRightCenter(states.finWait1.element).y);
-            arrows.finWait1ToClosing.setAttribute('x2', getLeftCenter(states.closing.element).x);
-            arrows.finWait1ToClosing.setAttribute('y2', getLeftCenter(states.closing.element).y);
-
-            // FIN_WAIT_1 -> TIME_WAIT
-            arrows.finWait1ToTimeWait.setAttribute('x1', getBottomRight(states.finWait1.element).x);
-            arrows.finWait1ToTimeWait.setAttribute('y1', getBottomRight(states.finWait1.element).y);
-            arrows.finWait1ToTimeWait.setAttribute('x2', getTopLeft(states.timeWait.element).x);
-            arrows.finWait1ToTimeWait.setAttribute('y2', getTopLeft(states.timeWait.element).y);
-
-            // FIN_WAIT_2 -> TIME_WAIT
-            arrows.finWait2ToTimeWait.setAttribute('x1', getRightCenter(states.finWait2.element).x);
-            arrows.finWait2ToTimeWait.setAttribute('y1', getRightCenter(states.finWait2.element).y);
-            arrows.finWait2ToTimeWait.setAttribute('x2', getLeftCenter(states.timeWait.element).x);
-            arrows.finWait2ToTimeWait.setAttribute('y2', getLeftCenter(states.timeWait.element).y);
-
-            // CLOSING -> TIME_WAIT
-            arrows.closingToTimeWait.setAttribute('x1', getBottomCenter(states.closing.element).x);
-            arrows.closingToTimeWait.setAttribute('y1', getBottomCenter(states.closing.element).y);
-            arrows.closingToTimeWait.setAttribute('x2', getTopCenter(states.timeWait.element).x);
-            arrows.closingToTimeWait.setAttribute('y2', getTopCenter(states.timeWait.element).y);
+            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - 120);
+            arrows_text.closedToListen_recv.setAttribute('y', closedToListenY - 8);
+            arrows_text.closedToListen_recv.textContent = "app:passive open";
+            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - 120);
+            arrows_text.closedToListen_send.setAttribute('y', closedToListenY + 12);
+            arrows_text.closedToListen_send.textContent = "send:nothing";
 
             // CLOSED -> SYN_SENT
             arrows.closedToSynSent.setAttribute('x1', getBottomRight(states.closed.element).x);
@@ -438,23 +508,223 @@
             arrows.closedToSynSent.setAttribute('x2', getTopCenter(states.synSent.element).x);
             arrows.closedToSynSent.setAttribute('y2', getTopCenter(states.synSent.element).y);
 
+            const closedToSynSentX = (parseFloat(arrows.closedToSynSent.getAttribute('x1')) + parseFloat(arrows.closedToSynSent.getAttribute('x2'))) / 2;
+            const closedToSynSentY = (parseFloat(arrows.closedToSynSent.getAttribute('y1')) + parseFloat(arrows.closedToSynSent.getAttribute('y2'))) / 2;
+
+            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + 25);
+            arrows_text.closedToSynSent_recv.setAttribute('y', closedToSynSentY - 10);
+            arrows_text.closedToSynSent_recv.textContent = "app:active open";
+            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + 25);
+            arrows_text.closedToSynSent_send.setAttribute('y', closedToSynSentY + 10);
+            arrows_text.closedToSynSent_send.textContent = "send:SYN";
+
+            // LISTEN -> SYN_RCVD
+            arrows.listenToSynRcvd.setAttribute('x1', getLeftCenter(states.listen.element).x);
+            arrows.listenToSynRcvd.setAttribute('y1', getLeftCenter(states.listen.element).y);
+            arrows.listenToSynRcvd.setAttribute('x2', getTopRight(states.synRcvd.element).x);
+            arrows.listenToSynRcvd.setAttribute('y2', getTopRight(states.synRcvd.element).y);
+
+            const listenToSynRcvdX = (parseFloat(arrows.listenToSynRcvd.getAttribute('x1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('x2'))) / 2;
+            const listenToSynRcvdY = (parseFloat(arrows.listenToSynRcvd.getAttribute('y1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('y2'))) / 2;
+
+            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - 50);
+            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - 40);
+            arrows_text.listenToSynRcvd_recv.textContent = "recv:SYN";
+            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX - 50);
+            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - 20);
+            arrows_text.listenToSynRcvd_send.textContent = "send:SYN,ACK";
+
+            // SYN_SENT -> SYN_RCVD
+            arrows.synSentToSynRcvd.setAttribute('x1', getLeftCenter(states.synSent.element).x);
+            arrows.synSentToSynRcvd.setAttribute('y1', getLeftCenter(states.synSent.element).y);
+            arrows.synSentToSynRcvd.setAttribute('x2', getRightCenter(states.synRcvd.element).x);
+            arrows.synSentToSynRcvd.setAttribute('y2', getRightCenter(states.synRcvd.element).y);
+
+            const synSentToSynRcvdX = (parseFloat(arrows.synSentToSynRcvd.getAttribute('x1')) + parseFloat(arrows.synSentToSynRcvd.getAttribute('x2'))) / 2;
+            const synSentToSynRcvdY = (parseFloat(arrows.synSentToSynRcvd.getAttribute('y1')) + parseFloat(arrows.synSentToSynRcvd.getAttribute('y2'))) / 2;
+
+            arrows_text.synSentToSynRcvd_recv.setAttribute('x', synSentToSynRcvdX);
+            arrows_text.synSentToSynRcvd_recv.setAttribute('y', synSentToSynRcvdY - 8);
+            arrows_text.synSentToSynRcvd_recv.textContent = "recv:SYN";
+            arrows_text.synSentToSynRcvd_send.setAttribute('x', synSentToSynRcvdX);
+            arrows_text.synSentToSynRcvd_send.setAttribute('y', synSentToSynRcvdY + 12);
+            arrows_text.synSentToSynRcvd_send.textContent = "send:SYN,ACK";
+
+            // SYN_SENT -> ESTABLISHED
+            arrows.synSentToEstablished.setAttribute('x1', getBottomLeft(states.synSent.element).x);
+            arrows.synSentToEstablished.setAttribute('y1', getBottomLeft(states.synSent.element).y);
+            arrows.synSentToEstablished.setAttribute('x2', getTopRight(states.established.element).x);
+            arrows.synSentToEstablished.setAttribute('y2', getTopRight(states.established.element).y);
+
+            const synSentToEstablishedX = (parseFloat(arrows.synSentToEstablished.getAttribute('x1')) + parseFloat(arrows.synSentToEstablished.getAttribute('x2'))) / 2;
+            const synSentToEstablishedY = (parseFloat(arrows.synSentToEstablished.getAttribute('y1')) + parseFloat(arrows.synSentToEstablished.getAttribute('y2'))) / 2;
+
+            arrows_text.synSentToEstablished_recv.setAttribute('x', synSentToEstablishedX);
+            arrows_text.synSentToEstablished_recv.setAttribute('y', synSentToEstablishedY + 10);
+            arrows_text.synSentToEstablished_recv.textContent = "recv:SYN,ACK";
+            arrows_text.synSentToEstablished_send.setAttribute('x', synSentToEstablishedX);
+            arrows_text.synSentToEstablished_send.setAttribute('y', synSentToEstablishedY + 25);
+            arrows_text.synSentToEstablished_send.textContent = "send:ACK";
+
+            // SYN_RCVD -> ESTABLISHED
+            arrows.synRcvdToEstablished.setAttribute('x1', getBottomRight(states.synRcvd.element).x);
+            arrows.synRcvdToEstablished.setAttribute('y1', getBottomRight(states.synRcvd.element).y);
+            arrows.synRcvdToEstablished.setAttribute('x2', getTopLeft(states.established.element).x);
+            arrows.synRcvdToEstablished.setAttribute('y2', getTopLeft(states.established.element).y);
+
+            const synRcvdToEstablishedX = (parseFloat(arrows.synRcvdToEstablished.getAttribute('x1')) + parseFloat(arrows.synRcvdToEstablished.getAttribute('x2'))) / 2;
+            const synRcvdToEstablishedY = (parseFloat(arrows.synRcvdToEstablished.getAttribute('y1')) + parseFloat(arrows.synRcvdToEstablished.getAttribute('y2'))) / 2;
+
+            arrows_text.synRcvdToEstablished_recv.setAttribute('x', synRcvdToEstablishedX - 20);
+            arrows_text.synRcvdToEstablished_recv.setAttribute('y', synRcvdToEstablishedY + 20);
+            arrows_text.synRcvdToEstablished_recv.textContent = "recv:ACK";
+            arrows_text.synRcvdToEstablished_send.setAttribute('x', synRcvdToEstablishedX - 20);
+            arrows_text.synRcvdToEstablished_send.setAttribute('y', synRcvdToEstablishedY + 35);
+            arrows_text.synRcvdToEstablished_send.textContent = "send:nothing";
+
+            // SYN_RCVD -> FIN_WAIT_1
+            arrows.synRcvdToFinWait1.setAttribute('x1', getBottomCenter(states.synRcvd.element).x);
+            arrows.synRcvdToFinWait1.setAttribute('y1', getBottomCenter(states.synRcvd.element).y);
+            arrows.synRcvdToFinWait1.setAttribute('x2', getTopCenter(states.finWait1.element).x);
+            arrows.synRcvdToFinWait1.setAttribute('y2', getTopCenter(states.finWait1.element).y);
+
+            const synRcvdToFinWait1X = (parseFloat(arrows.synRcvdToFinWait1.getAttribute('x1')) + parseFloat(arrows.synRcvdToFinWait1.getAttribute('x2'))) / 2;
+            const synRcvdToFinWait1Y = (parseFloat(arrows.synRcvdToFinWait1.getAttribute('y1')) + parseFloat(arrows.synRcvdToFinWait1.getAttribute('y2'))) / 2;
+
+            arrows_text.synRcvdToFinWait1_recv.setAttribute('x', synRcvdToFinWait1X + 5);
+            arrows_text.synRcvdToFinWait1_recv.setAttribute('y', synRcvdToFinWait1Y - 8);
+            arrows_text.synRcvdToFinWait1_recv.textContent = "appl:close";
+            arrows_text.synRcvdToFinWait1_send.setAttribute('x', synRcvdToFinWait1X + 5);
+            arrows_text.synRcvdToFinWait1_send.setAttribute('y', synRcvdToFinWait1Y + 12);
+            arrows_text.synRcvdToFinWait1_send.textContent = "send:FIN";
+
+            // ESTABLISHED -> FIN_WAIT_1
+            arrows.establishedToFinWait1.setAttribute('x1', getBottomLeft(states.established.element).x);
+            arrows.establishedToFinWait1.setAttribute('y1', getBottomLeft(states.established.element).y);
+            arrows.establishedToFinWait1.setAttribute('x2', getTopRight(states.finWait1.element).x);
+            arrows.establishedToFinWait1.setAttribute('y2', getTopRight(states.finWait1.element).y);
+
+            const establishedToFinWait1X = (parseFloat(arrows.establishedToFinWait1.getAttribute('x1')) + parseFloat(arrows.establishedToFinWait1.getAttribute('x2'))) / 2;
+            const establishedToFinWait1Y = (parseFloat(arrows.establishedToFinWait1.getAttribute('y1')) + parseFloat(arrows.establishedToFinWait1.getAttribute('y2'))) / 2;
+
+            arrows_text.establishedToFinWait1_recv.setAttribute('x', establishedToFinWait1X - 80);
+            arrows_text.establishedToFinWait1_recv.setAttribute('y', establishedToFinWait1Y - 8);
+            arrows_text.establishedToFinWait1_recv.textContent = "app:close";
+            arrows_text.establishedToFinWait1_send.setAttribute('x', establishedToFinWait1X - 80);
+            arrows_text.establishedToFinWait1_send.setAttribute('y', establishedToFinWait1Y + 12);
+            arrows_text.establishedToFinWait1_send.textContent = "send:FIN";
+
+            // FIN_WAIT_1 -> FIN_WAIT_2
+            arrows.finWait1ToFinWait2.setAttribute('x1', getBottomCenter(states.finWait1.element).x);
+            arrows.finWait1ToFinWait2.setAttribute('y1', getBottomCenter(states.finWait1.element).y);
+            arrows.finWait1ToFinWait2.setAttribute('x2', getTopCenter(states.finWait2.element).x);
+            arrows.finWait1ToFinWait2.setAttribute('y2', getTopCenter(states.finWait2.element).y);
+
+            const finWait1ToFinWait2X = (parseFloat(arrows.finWait1ToFinWait2.getAttribute('x1')) + parseFloat(arrows.finWait1ToFinWait2.getAttribute('x2'))) / 2;
+            const finWait1ToFinWait2Y = (parseFloat(arrows.finWait1ToFinWait2.getAttribute('y1')) + parseFloat(arrows.finWait1ToFinWait2.getAttribute('y2'))) / 2;
+
+            arrows_text.finWait1ToFinWait2_recv.setAttribute('x', finWait1ToFinWait2X - 80);
+            arrows_text.finWait1ToFinWait2_recv.setAttribute('y', finWait1ToFinWait2Y - 8);
+            arrows_text.finWait1ToFinWait2_recv.textContent = "recv:ACK";
+            arrows_text.finWait1ToFinWait2_send.setAttribute('x', finWait1ToFinWait2X - 80);
+            arrows_text.finWait1ToFinWait2_send.setAttribute('y', finWait1ToFinWait2Y + 12);
+            arrows_text.finWait1ToFinWait2_send.textContent = "send:nothing";
+
+            // FIN_WAIT_1 -> CLOSING
+            arrows.finWait1ToClosing.setAttribute('x1', getRightCenter(states.finWait1.element).x);
+            arrows.finWait1ToClosing.setAttribute('y1', getRightCenter(states.finWait1.element).y);
+            arrows.finWait1ToClosing.setAttribute('x2', getLeftCenter(states.closing.element).x);
+            arrows.finWait1ToClosing.setAttribute('y2', getLeftCenter(states.closing.element).y);
+
+            const finWait1ToClosingX = (parseFloat(arrows.finWait1ToClosing.getAttribute('x1')) + parseFloat(arrows.finWait1ToClosing.getAttribute('x2'))) / 2;
+            const finWait1ToClosingY = (parseFloat(arrows.finWait1ToClosing.getAttribute('y1')) + parseFloat(arrows.finWait1ToClosing.getAttribute('y2'))) / 2;
+
+            arrows_text.finWait1ToClosing_recv.setAttribute('x', finWait1ToClosingX);
+            arrows_text.finWait1ToClosing_recv.setAttribute('y', finWait1ToClosingY - 8);
+            arrows_text.finWait1ToClosing_recv.textContent = "recv:FIN";
+            arrows_text.finWait1ToClosing_send.setAttribute('x', finWait1ToClosingX);
+            arrows_text.finWait1ToClosing_send.setAttribute('y', finWait1ToClosingY + 12);
+            arrows_text.finWait1ToClosing_send.textContent = "send:ACK";
+
+            // FIN_WAIT_1 -> TIME_WAIT
+            arrows.finWait1ToTimeWait.setAttribute('x1', getBottomRight(states.finWait1.element).x);
+            arrows.finWait1ToTimeWait.setAttribute('y1', getBottomRight(states.finWait1.element).y);
+            arrows.finWait1ToTimeWait.setAttribute('x2', getTopLeft(states.timeWait.element).x);
+            arrows.finWait1ToTimeWait.setAttribute('y2', getTopLeft(states.timeWait.element).y);
+
+            const finWait1ToTimeWaitX = (parseFloat(arrows.finWait1ToTimeWait.getAttribute('x1')) + parseFloat(arrows.finWait1ToTimeWait.getAttribute('x2'))) / 2;
+            const finWait1ToTimeWaitY = (parseFloat(arrows.finWait1ToTimeWait.getAttribute('y1')) + parseFloat(arrows.finWait1ToTimeWait.getAttribute('y2'))) / 2;
+
+            arrows_text.finWait1ToTimeWait_recv.setAttribute('x', finWait1ToTimeWaitX - 110);
+            arrows_text.finWait1ToTimeWait_recv.setAttribute('y', finWait1ToTimeWaitY);
+            arrows_text.finWait1ToTimeWait_recv.textContent = "recv:FIN,ACK";
+            arrows_text.finWait1ToTimeWait_send.setAttribute('x', finWait1ToTimeWaitX - 110);
+            arrows_text.finWait1ToTimeWait_send.setAttribute('y', finWait1ToTimeWaitY + 20);
+            arrows_text.finWait1ToTimeWait_send.textContent = "send:ACK";
+
+            // FIN_WAIT_2 -> TIME_WAIT
+            arrows.finWait2ToTimeWait.setAttribute('x1', getRightCenter(states.finWait2.element).x);
+            arrows.finWait2ToTimeWait.setAttribute('y1', getRightCenter(states.finWait2.element).y);
+            arrows.finWait2ToTimeWait.setAttribute('x2', getLeftCenter(states.timeWait.element).x);
+            arrows.finWait2ToTimeWait.setAttribute('y2', getLeftCenter(states.timeWait.element).y);
+
+            const finWait2ToTimeWaitX = (parseFloat(arrows.finWait2ToTimeWait.getAttribute('x1')) + parseFloat(arrows.finWait2ToTimeWait.getAttribute('x2'))) / 2;
+            const finWait2ToTimeWaitY = (parseFloat(arrows.finWait2ToTimeWait.getAttribute('y1')) + parseFloat(arrows.finWait2ToTimeWait.getAttribute('y2'))) / 2;
+
+            arrows_text.finWait2ToTimeWait_recv.setAttribute('x', finWait2ToTimeWaitX - 20);
+            arrows_text.finWait2ToTimeWait_recv.setAttribute('y', finWait2ToTimeWaitY - 8);
+            arrows_text.finWait2ToTimeWait_recv.textContent = "recv:FIN";
+            arrows_text.finWait2ToTimeWait_send.setAttribute('x', finWait2ToTimeWaitX - 20);
+            arrows_text.finWait2ToTimeWait_send.setAttribute('y', finWait2ToTimeWaitY + 12);
+            arrows_text.finWait2ToTimeWait_send.textContent = "send:ACK";
+
+            // CLOSING -> TIME_WAIT
+            arrows.closingToTimeWait.setAttribute('x1', getBottomCenter(states.closing.element).x);
+            arrows.closingToTimeWait.setAttribute('y1', getBottomCenter(states.closing.element).y);
+            arrows.closingToTimeWait.setAttribute('x2', getTopCenter(states.timeWait.element).x);
+            arrows.closingToTimeWait.setAttribute('y2', getTopCenter(states.timeWait.element).y);
+
+            const closingToTimeWaitX = (parseFloat(arrows.closingToTimeWait.getAttribute('x1')) + parseFloat(arrows.closingToTimeWait.getAttribute('x2'))) / 2;
+            const closingToTimeWaitY = (parseFloat(arrows.closingToTimeWait.getAttribute('y1')) + parseFloat(arrows.closingToTimeWait.getAttribute('y2'))) / 2;
+
+            arrows_text.closingToTimeWait_recv.setAttribute('x', closingToTimeWaitX + 20);
+            arrows_text.closingToTimeWait_recv.setAttribute('y', closingToTimeWaitY - 8);
+            arrows_text.closingToTimeWait_recv.textContent = "recv:ACK";
+            arrows_text.closingToTimeWait_send.setAttribute('x', closingToTimeWaitX + 20);
+            arrows_text.closingToTimeWait_send.setAttribute('y', closingToTimeWaitY + 12);
+            arrows_text.closingToTimeWait_send.textContent = "send:nothing";
+
+            // ESTABLISHED -> CLOSE_WAIT
+            arrows.establishedToCloseWait.setAttribute('x1', getBottomRight(states.established.element).x);
+            arrows.establishedToCloseWait.setAttribute('y1', getBottomRight(states.established.element).y);
+            arrows.establishedToCloseWait.setAttribute('x2', getTopLeft(states.closeWait.element).x);
+            arrows.establishedToCloseWait.setAttribute('y2', getTopLeft(states.closeWait.element).y);
+
+            const establishedToCloseWaitX = (parseFloat(arrows.establishedToCloseWait.getAttribute('x1')) + parseFloat(arrows.establishedToCloseWait.getAttribute('x2'))) / 2;
+            const establishedToCloseWaitY = (parseFloat(arrows.establishedToCloseWait.getAttribute('y1')) + parseFloat(arrows.establishedToCloseWait.getAttribute('y2'))) / 2;
+
+            arrows_text.establishedToCloseWait_recv.setAttribute('x', establishedToCloseWaitX - 20);
+            arrows_text.establishedToCloseWait_recv.setAttribute('y', establishedToCloseWaitY - 35);
+            arrows_text.establishedToCloseWait_recv.textContent = "recv:FIN";
+            arrows_text.establishedToCloseWait_send.setAttribute('x', establishedToCloseWaitX - 20);
+            arrows_text.establishedToCloseWait_send.setAttribute('y', establishedToCloseWaitY -20);
+            arrows_text.establishedToCloseWait_send.textContent = "send:ACK";
+
             // CLOSE_WAIT -> LAST_ACK
             arrows.closeWaitToLastAck.setAttribute('x1', getBottomCenter(states.closeWait.element).x);
             arrows.closeWaitToLastAck.setAttribute('y1', getBottomCenter(states.closeWait.element).y);
             arrows.closeWaitToLastAck.setAttribute('x2', getTopCenter(states.lastAck.element).x);
             arrows.closeWaitToLastAck.setAttribute('y2', getTopCenter(states.lastAck.element).y);
 
-            // TIME_WAIT -> CLOSED
-            arrows.timeWaitToClosed.setAttribute('x1', getRightCenter(states.timeWait.element).x);
-            arrows.timeWaitToClosed.setAttribute('y1', getRightCenter(states.timeWait.element).y);
-            arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
-            arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait.element).y);
+            const closeWaitToLastAckX = (parseFloat(arrows.closeWaitToLastAck.getAttribute('x1')) + parseFloat(arrows.closeWaitToLastAck.getAttribute('x2'))) / 2;
+            const closeWaitToLastAckY = (parseFloat(arrows.closeWaitToLastAck.getAttribute('y1')) + parseFloat(arrows.closeWaitToLastAck.getAttribute('y2'))) / 2;
 
-            // LAST_ACK -> CLOSED
-            arrows.lastAckToClosed.setAttribute('x1', getRightCenter(states.lastAck.element).x);
-            arrows.lastAckToClosed.setAttribute('y1', getRightCenter(states.lastAck.element).y);
-            arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
-            arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck.element).y);
+            arrows_text.closeWaitToLastAck_recv.setAttribute('x', closeWaitToLastAckX + 20);
+            arrows_text.closeWaitToLastAck_recv.setAttribute('y', closeWaitToLastAckY - 8);
+            arrows_text.closeWaitToLastAck_recv.textContent = "app:close";
+            arrows_text.closeWaitToLastAck_send.setAttribute('x', closeWaitToLastAckX + 20);
+            arrows_text.closeWaitToLastAck_send.setAttribute('y', closeWaitToLastAckY + 12);
+            arrows_text.closeWaitToLastAck_send.textContent = "send:FIN";
 
             // SYN_SENT -> CLOSED
             arrows.synSentToClosed.setAttribute('x1', getRightCenter(states.synSent.element).x);
@@ -462,15 +732,58 @@
             arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
             arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent.element).y);
 
-            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
-            arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed.element).y);
-            arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed.element).x);
-            arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed.element).y);
+            const synSentToClosedX = (parseFloat(arrows.synSentToClosed.getAttribute('x1')) + parseFloat(arrows.synSentToClosed.getAttribute('x2'))) / 2;
+            const synSentToClosedY = (parseFloat(arrows.synSentToClosed.getAttribute('y1')) + parseFloat(arrows.synSentToClosed.getAttribute('y2'))) / 2;
 
+            arrows_text.synSentToClosed_recv.setAttribute('x', synSentToClosedX - 60);
+            arrows_text.synSentToClosed_recv.setAttribute('y', synSentToClosedY - 8);
+            arrows_text.synSentToClosed_recv.textContent = "app:close";
+            arrows_text.synSentToClosed_send.setAttribute('x', synSentToClosedX - 60);
+            arrows_text.synSentToClosed_send.setAttribute('y', synSentToClosedY + 12);
+            arrows_text.synSentToClosed_send.textContent = "or timeout";
+
+            // LAST_ACK -> CLOSED
+            arrows.lastAckToClosed.setAttribute('x1', getRightCenter(states.lastAck.element).x);
+            arrows.lastAckToClosed.setAttribute('y1', getRightCenter(states.lastAck.element).y);
+            arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck.element).y);
+
+            const lastAckToClosedX = (parseFloat(arrows.lastAckToClosed.getAttribute('x1')) + parseFloat(arrows.lastAckToClosed.getAttribute('x2'))) / 2;
+            const lastAckToClosedY = (parseFloat(arrows.lastAckToClosed.getAttribute('y1')) + parseFloat(arrows.lastAckToClosed.getAttribute('y2'))) / 2;
+
+            arrows_text.lastAckToClosed_recv.setAttribute('x', lastAckToClosedX -  20);
+            arrows_text.lastAckToClosed_recv.setAttribute('y', lastAckToClosedY - 8);
+            arrows_text.lastAckToClosed_recv.textContent = "recv:ACK";
+            arrows_text.lastAckToClosed_send.setAttribute('x', lastAckToClosedX - 20);
+            arrows_text.lastAckToClosed_send.setAttribute('y', lastAckToClosedY + 12);
+            arrows_text.lastAckToClosed_send.textContent = "send:nothing";
+
+            // TIME_WAIT -> CLOSED
+            arrows.timeWaitToClosed.setAttribute('x1', getRightCenter(states.timeWait.element).x);
+            arrows.timeWaitToClosed.setAttribute('y1', getRightCenter(states.timeWait.element).y);
+            arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait.element).y);
+
+            const timeWaitToClosedX = (parseFloat(arrows.timeWaitToClosed.getAttribute('x1')) + parseFloat(arrows.timeWaitToClosed.getAttribute('x2'))) / 2;
+            const timeWaitToClosedY = (parseFloat(arrows.timeWaitToClosed.getAttribute('y1')) + parseFloat(arrows.timeWaitToClosed.getAttribute('y2'))) / 2;
+
+            arrows_text.timeWaitToClosed_recv.setAttribute('x', timeWaitToClosedX - 120);
+            arrows_text.timeWaitToClosed_recv.setAttribute('y', timeWaitToClosedY - 8);
+            arrows_text.timeWaitToClosed_recv.textContent = "timeout";
+            arrows_text.timeWaitToClosed_send.setAttribute('x', timeWaitToClosedX - 120);
+            arrows_text.timeWaitToClosed_send.setAttribute('y', timeWaitToClosedY + 12);
+            arrows_text.timeWaitToClosed_send.textContent = "send:nothing";
+
+            // Common lines
             arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
             arrows.vertical_common_line.setAttribute('y1', getRightCenter(states.timeWait.element).y);
             arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
             arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed.element).y);
+
+            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed.element).y);
+            arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed.element).x);
+            arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed.element).y);
         }
 
         // Initial update

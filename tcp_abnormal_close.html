@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Abnormal Connection Closure with CLOSE_WAIT Accumulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #eee;
+            padding-top: 50px;
+            position: relative;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            margin: 50px auto;
+            position: relative;
+        }
+        .box {
+            width: 160px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            position: relative;
+        }
+        .established { background-color: #27ae60; }  
+        .fin_wait_1 { background-color: #f39c12; }  
+        .fin_wait_2 { background-color: #e67e22; }  
+        .close_wait { background-color: #d35400; }  
+        .packet {
+            position: absolute;
+            width: 130px;
+            height: 45px;
+            line-height: 45px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: #3498db;  
+            color: #fff;
+            visibility: hidden;
+        }
+        .state {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #f1c40f;
+        }
+        .warning {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-top: 20px;
+        }
+        /* Watermark style */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.15); /* Light color for watermark */
+            pointer-events: none; /* Ensures it's not interactive */
+            z-index: 10;
+            user-select: none; /* Prevents text selection */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Watermark -->
+    <div class="watermark">wangbin579</div>
+
+    <h2>TCP Abnormal Connection Closure with CLOSE_WAIT Accumulation</h2>
+
+    <div class="container">
+        <div>
+            <div id="clientBox" class="box established">Client</div>
+            <div id="clientState" class="state">ESTABLISHED</div>
+        </div>
+        <div>
+            <div id="serverBox" class="box established">Server</div>
+            <div id="serverState" class="state">ESTABLISHED</div>
+        </div>
+    </div>
+
+    <div id="finPacket" class="packet">FIN -></div>
+    <div id="ackPacket" class="packet"><- ACK</div>
+
+    <div id="warning" class="warning" style="visibility: hidden;">
+        Warning: Server has too many CLOSE_WAIT connections! Resources may be exhausted!
+    </div>
+
+    <script>
+        function updateState(element, text) {
+            document.getElementById(element).innerText = text;
+        }
+
+        function startHandshake() {
+            let clientBox = document.getElementById("clientBox");
+            let serverBox = document.getElementById("serverBox");
+
+            let clientX = clientBox.getBoundingClientRect().x + 80; 
+            let serverX = serverBox.getBoundingClientRect().x + 0; 
+
+            let fin = document.getElementById("finPacket");
+            let ack = document.getElementById("ackPacket");
+            let warning = document.getElementById("warning");
+
+            // Step 1: Client sends FIN ¡ú Server
+            updateState("clientState", "FIN_WAIT_1");
+            clientBox.className = "box fin_wait_1";
+            gsap.set(fin, { visibility: "visible", x: clientX, y: -50 });
+            gsap.to(fin, { x: serverX, duration: 3, onComplete: function() {
+                gsap.set(fin, { visibility: "hidden" });
+
+                // Step 2: Server responds with ACK
+                updateState("serverState", "CLOSE_WAIT");
+                serverBox.className = "box close_wait";
+                gsap.set(ack, { visibility: "visible", x: serverX, y: -50 });
+                gsap.to(ack, { x: clientX, duration: 3, onComplete: function() {
+                    gsap.set(ack, { visibility: "hidden" });
+
+                    // Client moves to FIN_WAIT_2
+                    updateState("clientState", "FIN_WAIT_2");
+                    clientBox.className = "box fin_wait_2";
+
+                    // Step 3: Server forgets to send FIN
+                    // Simulate multiple CLOSE_WAIT connections
+                    setTimeout(function() {
+                        updateState("serverState", "CLOSE_WAIT (Accumulating...)");
+                        warning.style.visibility = "visible";
+                    }, 2000); // Delay to show warning
+                }});
+            }});
+        }
+
+        setTimeout(startHandshake, 1000);
+    </script>
+
+</body>
+</html>

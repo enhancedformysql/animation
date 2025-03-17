@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simultaneous TCP Connection Closure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #eee;
+            padding-top: 50px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            margin: 50px auto;
+            position: relative;
+        }
+        .box {
+            width: 160px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            position: relative;
+        }
+        .established { background-color: #27ae60; }  /* Green */
+        .fin_wait_1 { background-color: #f39c12; }  /* Orange */
+        .closing { background-color: #e67e22; }  /* Darker Orange */
+        .time_wait { background-color: #8e44ad; }  /* Purple */
+        .closed { background-color: gray; }  /* Gray */
+        .packet {
+            position: absolute;
+            width: 130px;
+            height: 45px;
+            line-height: 45px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: #3498db;  /* Blue */
+            color: #fff;
+            visibility: hidden;
+        }
+        .state {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Simultaneous TCP Connection Closure</h2>
+
+    <div class="container">
+        <div>
+            <div id="clientBox" class="box established">Client</div>
+            <div id="clientState" class="state">ESTABLISHED</div>
+        </div>
+        <div>
+            <div id="serverBox" class="box established">Server</div>
+            <div id="serverState" class="state">ESTABLISHED</div>
+        </div>
+    </div>
+
+    <div id="finPacketClient" class="packet">FIN -></div>
+    <div id="finPacketServer" class="packet"><- FIN</div>
+    <div id="ackPacketClient" class="packet">ACK -></div>
+    <div id="ackPacketServer" class="packet"><- ACK</div>
+
+    <script>
+        function updateState(element, text) {
+            document.getElementById(element).innerText = text;
+        }
+
+        function startSimultaneousClose() {
+            let clientBox = document.getElementById("clientBox");
+            let serverBox = document.getElementById("serverBox");
+
+            let clientX = clientBox.getBoundingClientRect().x + 80; 
+            let serverX = serverBox.getBoundingClientRect().x + 0; 
+
+            let finClient = document.getElementById("finPacketClient");
+            let finServer = document.getElementById("finPacketServer");
+            let ackClient = document.getElementById("ackPacketClient");
+            let ackServer = document.getElementById("ackPacketServer");
+
+            // Step 1: Both send FIN simultaneously
+            updateState("clientState", "FIN_WAIT_1");
+            clientBox.className = "box fin_wait_1";
+            updateState("serverState", "FIN_WAIT_1");
+            serverBox.className = "box fin_wait_1";
+
+            gsap.set(finClient, { visibility: "visible", x: clientX, y: -50 });
+            gsap.to(finClient, { x: serverX, duration: 3, onComplete: function() {
+                gsap.set(finClient, { visibility: "hidden" });
+            }});
+            
+            gsap.set(finServer, { visibility: "visible", x: serverX, y: 50 });
+            gsap.to(finServer, { x: clientX, duration: 3, onComplete: function() {
+                gsap.set(finServer, { visibility: "hidden" });
+                
+                // Step 2: Both move to CLOSING state
+                updateState("clientState", "CLOSING");
+                clientBox.className = "box closing";
+                updateState("serverState", "CLOSING");
+                serverBox.className = "box closing";
+                
+                // Step 3: Both send ACK
+                setTimeout(function() {
+                    gsap.set(ackClient, { visibility: "visible", x: clientX, y: -50 });
+                    gsap.to(ackClient, { x: serverX, duration: 3, onComplete: function() {
+                        gsap.set(ackClient, { visibility: "hidden" });
+                    }});
+                    
+                    gsap.set(ackServer, { visibility: "visible", x: serverX, y: 50 });
+                    gsap.to(ackServer, { x: clientX, duration: 3, onComplete: function() {
+                        gsap.set(ackServer, { visibility: "hidden" });
+
+                        // Step 4: Both move to TIME_WAIT state
+                        updateState("clientState", "TIME_WAIT");
+                        clientBox.className = "box time_wait";
+                        updateState("serverState", "TIME_WAIT");
+                        serverBox.className = "box time_wait";
+
+                        // Final step: After timeout, move to CLOSED
+                        setTimeout(function() {
+                            updateState("clientState", "CLOSED");
+                            clientBox.className = "box closed";
+                            updateState("serverState", "CLOSED");
+                            serverBox.className = "box closed";
+                        }, 4000);
+                    }});
+                }, 2000);
+            }});
+        }
+
+        setTimeout(startSimultaneousClose, 1000);
+    </script>
+</body>
+</html>

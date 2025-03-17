@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The principle of TCP state TIME_WAIT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: #eee;
+            padding-top: 50px;
+            position: relative;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            margin: 50px auto;
+            position: relative;
+        }
+        .box {
+            width: 160px;
+            height: 100px;
+            line-height: 100px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            position: relative;
+            background-color: gray;
+        }
+        .established { background-color: #27ae60; }  
+        .fin_wait_1 { background-color: #f39c12; }  
+        .fin_wait_2 { background-color: #e67e22; }  
+        .close_wait { background-color: #d35400; }  
+        .last_ack { background-color: #c0392b; }  
+        .time_wait { background-color: #8e44ad; }  
+        .closed { background-color: gray; }  
+        .packet {
+            position: absolute;
+            width: 130px;
+            height: 45px;
+            line-height: 45px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: #3498db;  
+            color: #fff;
+            visibility: hidden;
+        }
+        .state {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #f1c40f;
+        }
+        .warning {
+            color: yellow;
+            font-size: 16px;
+            font-weight: bold;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <h2>The principle of TCP state TIME_WAIT</h2>
+    <div class="container">
+        <div>
+            <div id="clientBox" class="box established">Client</div>
+            <div id="clientState" class="state">ESTABLISHED</div>
+        </div>
+        <div>
+            <div id="serverBox" class="box established">Server</div>
+            <div id="serverState" class="state">ESTABLISHED</div>
+        </div>
+    </div>
+    <div id="finPacket" class="packet">FIN -></div>
+    <div id="ackPacket1" class="packet"><- ACK</div>
+    <div id="finPacket2" class="packet"><- FIN</div>
+    <div id="ackPacket2" class="packet">ACK -></div>
+    <div id="warning" class="warning">Warning: Too many TIME_WAIT states may cause server issues!</div>
+    <script>
+        function updateState(element, text, className) {
+            document.getElementById(element).innerText = text;
+            document.getElementById(element.replace("State", "Box")).className = "box " + className;
+        }
+        function startHandshake() {
+            updateState("clientState", "ESTABLISHED", "established");
+            updateState("serverState", "ESTABLISHED", "established");
+            let clientBox = document.getElementById("clientBox");
+            let serverBox = document.getElementById("serverBox");
+            let clientX = clientBox.getBoundingClientRect().x + 80; 
+            let serverX = serverBox.getBoundingClientRect().x + 0; 
+            let fin = document.getElementById("finPacket");
+            let ack1 = document.getElementById("ackPacket1");
+            let fin2 = document.getElementById("finPacket2");
+            let ack2 = document.getElementById("ackPacket2");
+            let warning = document.getElementById("warning");
+            
+            // Step 1: Server sends FIN ¡ú Client
+            updateState("serverState", "FIN_WAIT_1", "fin_wait_1");
+            gsap.set(fin, { visibility: "visible", x: serverX, y: -50 });
+            gsap.to(fin, { x: clientX, duration: 3, onComplete: function() {
+                gsap.set(fin, { visibility: "hidden" });
+                updateState("clientState", "CLOSE_WAIT", "close_wait");
+                
+                // Step 2: Client responds with ACK
+                gsap.set(ack1, { visibility: "visible", x: clientX, y: -50 });
+                gsap.to(ack1, { x: serverX, duration: 3, onComplete: function() {
+                    gsap.set(ack1, { visibility: "hidden" });
+                    updateState("serverState", "FIN_WAIT_2", "fin_wait_2");
+                    
+                    // Step 3: Client sends FIN ¡ú Server
+                    setTimeout(function() {
+                        updateState("clientState", "LAST_ACK", "last_ack");
+                        gsap.set(fin2, { visibility: "visible", x: clientX, y: -50 });
+                        gsap.to(fin2, { x: serverX, duration: 3, onComplete: function() {
+                            gsap.set(fin2, { visibility: "hidden" });
+                            
+                            // Step 4: Server responds with ACK
+                            updateState("serverState", "TIME_WAIT", "time_wait");
+                            gsap.set(ack2, { visibility: "visible", x: serverX, y: -50 });
+                            gsap.to(ack2, { x: clientX, duration: 3, onComplete: function() {
+                                gsap.set(ack2, { visibility: "hidden" });
+                                updateState("clientState", "CLOSED", "closed");
+                                
+                                // Show warning about TIME_WAIT state
+                                gsap.set(warning, { visibility: "visible" });
+                                setTimeout(() => gsap.set(warning, { visibility: "hidden" }), 5000);
+                                
+                                setTimeout(() => updateState("serverState", "CLOSED", "closed"), 10000);
+                            }});
+                        }});
+                    }, 2000);
+                }});
+            }});
+        }
+        setTimeout(startHandshake, 1000);
+    </script>
+</body>
+</html>
