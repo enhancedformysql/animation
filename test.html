@@ -51,20 +51,12 @@
         }
 
         .arrow {
-            position: absolute;
             stroke: #333;
             stroke-width: 2;
             marker-end: url(#arrowhead);
         }
-        
-        .common_line {
-            position: absolute;
-            stroke: #333;
-            stroke-width: 2;
-        }
 
         .condition-text {
-            position: absolute;
             font-family: Arial;
             font-size: 12px;
             fill: black;
@@ -80,19 +72,24 @@
         .state.animated {
             animation: pulse 0.5s ease-in-out;
         }
-        
-  
+
+        /* Mobile-specific styles */
+        @media (max-width: 600px) {
+            .state {
+                width: 80px;
+                height: 30px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- TCP State Nodes -->
-        <div id="closed" class="state" style="left: 500px; top: 50px;">CLOSED</div>
-        <div id="listen" class="state" style="left: 500px; top: 150px;">LISTEN</div>
-        <div id="synRcvd" class="state" style="left: 150px; top: 250px;">SYN_RCVD</div>
-        <div id="synSent" class="state" style="left: 850px; top: 250px;">SYN_SENT</div>
-
+        <div id="closed" class="state" style="left: 50%; top: 10%;">CLOSED</div>
+        <div id="listen" class="state" style="left: 50%; top: 30%;">LISTEN</div>
+        <div id="synRcvd" class="state" style="left: 20%; top: 50%;">SYN_RCVD</div>
+        <div id="synSent" class="state" style="left: 80%; top: 50%;">SYN_SENT</div>
 
         <!-- SVG Canvas -->
         <svg>
@@ -119,27 +116,17 @@
             <text id="listenToSynRcvdText_recv" class="condition-text"></text>
             <text id="listenToSynRcvdText_send" class="condition-text"></text>
 
-    
-
             <!-- SYN_SENT -> CLOSED -->
             <line id="synSentToClosed" class="arrow"></line>
             <text id="synSentToClosedText_recv" class="condition-text"></text>
             <text id="synSentToClosedText_send" class="condition-text"></text>
 
-
             <!-- Common lines -->
-            <line id="vertical_common_line" class="common_line"></line>
+            <line id="vertical_common_line" class="arrow"></line>
             <line id="commonToClosed" class="arrow"></line>
         </svg>
     </div>
-    
-    <div class="rst-notification">
-        <strong>Note:</strong> The TCP state diagram must consider the impact of <code>RST</code> packets. Any TCP connection in a state other than <code>CLOSED</code> or <code>LISTEN</code> or <code>TIMEWAIT</code> will immediately transition to the <code>CLOSED</code> state upon receiving an <code>RST</code> packet.
-    </div>
 
-    <button id="open-page-reset-button">RST Case</button>
-    <button id="open-page-lost-button">Packet Loss Case</button>
-      
     <script>
         // Get all state nodes
         const states = {
@@ -198,14 +185,12 @@
                 }
             });
         });
-        
+
         // Get all arrows
         const arrows = {
             closedToListen: document.getElementById('closedToListen'),
             closedToSynSent: document.getElementById('closedToSynSent'),
             listenToSynRcvd: document.getElementById('listenToSynRcvd'),
-            synSentToSynRcvd: document.getElementById('synSentToSynRcvd'),
-     
             synSentToClosed: document.getElementById('synSentToClosed'),
             vertical_common_line: document.getElementById('vertical_common_line'),
             commonToClosed: document.getElementById('commonToClosed')
@@ -220,13 +205,8 @@
             listenToSynRcvd_recv: document.getElementById('listenToSynRcvdText_recv'),
             listenToSynRcvd_send: document.getElementById('listenToSynRcvdText_send'),
             synSentToClosed_recv: document.getElementById('synSentToClosedText_recv'),
-            synSentToClosed_send: document.getElementById('synSentToClosedText_send'),
-            lastAckToClosed_recv: document.getElementById('lastAckToClosedText_recv'),
-            lastAckToClosed_send: document.getElementById('lastAckToClosedText_send'),
-            timeWaitToClosed_recv: document.getElementById('timeWaitToClosedText_recv'),
-            timeWaitToClosed_send: document.getElementById('timeWaitToClosedText_send')
+            synSentToClosed_send: document.getElementById('synSentToClosedText_send')
         };
-        
 
         // Calculate the bottom center of a state node
         function getBottomCenter(element) {
@@ -264,57 +244,41 @@
             };
         }
 
-        // Function to get top-left corner
-        function getTopLeft(element) {
-            const rect = element.getBoundingClientRect();
-            return {
-                x: rect.left,
-                y: rect.top
-            };
-        }
-
-        // Function to get top-right corner
-        function getTopRight(element) {
-            const rect = element.getBoundingClientRect();
-            return {
-                x: rect.right,
-                y: rect.top
-            };
-        }
-
-        // Function to get bottom-left corner
-        function getBottomLeft(element) {
-            const rect = element.getBoundingClientRect();
-            return {
-                x: rect.left,
-                y: rect.bottom
-            };
-        }
-
-        // Function to get bottom-right corner
         function getBottomRight(element) {
             const rect = element.getBoundingClientRect();
             return {
-                x: rect.right,
-                y: rect.bottom
+                x: rect.left + rect.width,
+                y: rect.top + rect.height
             };
         }
 
+        function getTopRight(element) {
+            const rect = element.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width,
+                y: rect.top
+            };
+        }
+        
+                
+        
         // Update arrow positions and text
         function updateArrows() {
+            const isMobile = window.innerWidth <= 600; // Check if mobile
+
             // CLOSED -> LISTEN
             arrows.closedToListen.setAttribute('x1', getBottomCenter(states.closed.element).x);
             arrows.closedToListen.setAttribute('y1', getBottomCenter(states.closed.element).y);
             arrows.closedToListen.setAttribute('x2', getTopCenter(states.listen.element).x);
             arrows.closedToListen.setAttribute('y2', getTopCenter(states.listen.element).y);
-            
+
             const closedToListenX = (parseFloat(arrows.closedToListen.getAttribute('x1')) + parseFloat(arrows.closedToListen.getAttribute('x2'))) / 2;
             const closedToListenY = (parseFloat(arrows.closedToListen.getAttribute('y1')) + parseFloat(arrows.closedToListen.getAttribute('y2'))) / 2;
 
-            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - 120);
+            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - (isMobile ? 60 : 120));
             arrows_text.closedToListen_recv.setAttribute('y', closedToListenY - 8);
             arrows_text.closedToListen_recv.textContent = "app:passive open";
-            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - 120);
+            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - (isMobile ? 60 : 120));
             arrows_text.closedToListen_send.setAttribute('y', closedToListenY + 12);
             arrows_text.closedToListen_send.textContent = "send:nothing";
 
@@ -327,10 +291,10 @@
             const closedToSynSentX = (parseFloat(arrows.closedToSynSent.getAttribute('x1')) + parseFloat(arrows.closedToSynSent.getAttribute('x2'))) / 2;
             const closedToSynSentY = (parseFloat(arrows.closedToSynSent.getAttribute('y1')) + parseFloat(arrows.closedToSynSent.getAttribute('y2'))) / 2;
 
-            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + 25);
+            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + (isMobile ? 10 : 25));
             arrows_text.closedToSynSent_recv.setAttribute('y', closedToSynSentY - 10);
             arrows_text.closedToSynSent_recv.textContent = "app:active open";
-            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + 25);
+            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + (isMobile ? 10 : 25));
             arrows_text.closedToSynSent_send.setAttribute('y', closedToSynSentY + 10);
             arrows_text.closedToSynSent_send.textContent = "send:SYN";
 
@@ -343,39 +307,36 @@
             const listenToSynRcvdX = (parseFloat(arrows.listenToSynRcvd.getAttribute('x1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('x2'))) / 2;
             const listenToSynRcvdY = (parseFloat(arrows.listenToSynRcvd.getAttribute('y1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('y2'))) / 2;
 
-            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - 50);
-            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - 40);
+            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - (isMobile ? 30 : 50));
+            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - (isMobile ? 20 : 40));
             arrows_text.listenToSynRcvd_recv.textContent = "recv:SYN";
-            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX - 50);
-            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - 20);
+            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX - (isMobile ? 30 : 50));
+            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - (isMobile ? 10 : 20));
             arrows_text.listenToSynRcvd_send.textContent = "send:SYN,ACK";
-
- 
 
             // SYN_SENT -> CLOSED
             arrows.synSentToClosed.setAttribute('x1', getRightCenter(states.synSent.element).x);
             arrows.synSentToClosed.setAttribute('y1', getRightCenter(states.synSent.element).y);
-            arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + (isMobile ? 100 : 200));
             arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent.element).y);
 
             const synSentToClosedX = (parseFloat(arrows.synSentToClosed.getAttribute('x1')) + parseFloat(arrows.synSentToClosed.getAttribute('x2'))) / 2;
             const synSentToClosedY = (parseFloat(arrows.synSentToClosed.getAttribute('y1')) + parseFloat(arrows.synSentToClosed.getAttribute('y2'))) / 2;
 
-            arrows_text.synSentToClosed_recv.setAttribute('x', synSentToClosedX - 60);
+            arrows_text.synSentToClosed_recv.setAttribute('x', synSentToClosedX - (isMobile ? 30 : 60));
             arrows_text.synSentToClosed_recv.setAttribute('y', synSentToClosedY - 8);
             arrows_text.synSentToClosed_recv.textContent = "app:close";
-            arrows_text.synSentToClosed_send.setAttribute('x', synSentToClosedX - 60);
+            arrows_text.synSentToClosed_send.setAttribute('x', synSentToClosedX - (isMobile ? 30 : 60));
             arrows_text.synSentToClosed_send.setAttribute('y', synSentToClosedY + 12);
             arrows_text.synSentToClosed_send.textContent = "or timeout";
 
-    
             // Common lines
-            arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent.element).x + (isMobile ? 100 : 200));
             arrows.vertical_common_line.setAttribute('y1', getRightCenter(states.synSent.element).y);
-            arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent.element).x + (isMobile ? 100 : 200));
             arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed.element).y);
 
-            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + (isMobile ? 100 : 200));
             arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed.element).y);
             arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed.element).x);
             arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed.element).y);
@@ -384,9 +345,6 @@
         // Initial update
         updateArrows();
 
-
-        
-        
         // Listen for window resize events
         window.addEventListener('resize', updateArrows);
     </script>
