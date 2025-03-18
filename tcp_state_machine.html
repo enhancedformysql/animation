@@ -67,7 +67,6 @@
             fill: black;
         }
 
-        /* Animation for states */
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
@@ -108,142 +107,181 @@
         }
         
         #open-page-reset-button {
-            position: absolute;
-            width: 160px;
-            height: 30px;
+            position: fixed;
+            left: 20%;
+            bottom: 300px;
         }
         
         #open-page-reset-button:hover {
-            background-color: green; /* Background color on hover */
+            background-color: green;
         }
         
         #open-page-lost-button {
-            position: absolute;
-            width: 160px;
-            height: 30px;
+            position: fixed;
+            left: 20%;
+            bottom: 300px;
         }
         
         #open-page-lost-button:hover {
-            background-color: green; /* Background color on hover */
+            background-color: green;
+        }
+
+        @media (max-width: 600px) {
+            .state {
+                width: 80px; 
+                height: 30px;
+                font-size: 12px; 
+            }
+
+            #closed {
+                left: 50% !important;
+                top: 5% !important;
+            }
+            #listen {
+                left: 50% !important;
+                top: 20% !important;
+            }
+            #synRcvd {
+                left: 10% !important;
+                top: 35% !important;
+            }
+            #synSent {
+                left: 70% !important;
+                top: 35% !important;
+            }
+            #established {
+                left: 50% !important;
+                top: 50% !important;
+            }
+            #finWait1 {
+                left: 10% !important;
+                top: 65% !important;
+            }
+            #closeWait {
+                left: 70% !important;
+                top: 65% !important;
+            }
+            #closing {
+                left: 50% !important;
+                top: 80% !important;
+            }
+            #finWait2 {
+                left: 10% !important;
+                top: 95% !important;
+            }
+            #timeWait {
+                left: 50% !important;
+                top: 95% !important;
+            }
+            #lastAck {
+                left: 70% !important;
+                top: 90% !important;
+            }
+
+            .condition-text {
+                font-size: 10px; 
+            }
+
+            .arrow {
+                stroke-width: 1.5; 
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- TCP State Nodes -->
-        <div id="closed" class="state" style="left: 500px; top: 50px;">CLOSED</div>
-        <div id="listen" class="state" style="left: 500px; top: 150px;">LISTEN</div>
-        <div id="synRcvd" class="state" style="left: 150px; top: 250px;">SYN_RCVD</div>
-        <div id="synSent" class="state" style="left: 850px; top: 250px;">SYN_SENT</div>
-        <div id="established" class="state" style="left: 500px; top: 350px;">ESTABLISHED</div>
-        <div id="finWait1" class="state" style="left: 150px; top: 500px;">FIN_WAIT_1</div>
-        <div id="closeWait" class="state" style="left: 850px; top: 500px;">CLOSE_WAIT</div>
-        <div id="closing" class="state" style="left: 500px; top: 500px;">CLOSING</div>
-        <div id="finWait2" class="state" style="left: 150px; top: 650px;">FIN_WAIT_2</div>
-        <div id="timeWait" class="state" style="left: 500px; top: 650px;">TIME_WAIT</div>
-        <div id="lastAck" class="state" style="left: 850px; top: 600px;">LAST_ACK</div>
-
-        <!-- SVG Canvas -->
+        <div id="closed" class="state" style="left: 50%; top: 5%;">CLOSED</div>
+        <div id="listen" class="state" style="left: 50%; top: 13%;">LISTEN</div>
+        <div id="synRcvd" class="state" style="left: 25%; top: 25%;">SYN_RCVD</div>
+        <div id="synSent" class="state" style="left: 75%; top: 25%;">SYN_SENT</div>
+        <div id="established" class="state" style="left: 50%; top: 40%;">ESTABLISHED</div>    
+            
+        <div id="finWait1" class="state" style="left: 25%; top: 55%;">FIN_WAIT_1</div>
+        <div id="closeWait" class="state" style="left: 75%; top: 55%;">CLOSE_WAIT</div>
+        <div id="closing" class="state" style="left: 50%; top: 55%;">CLOSING</div>
+        <div id="finWait2" class="state" style="left: 25%; top: 70%;">FIN_WAIT_2</div>
+        <div id="timeWait" class="state" style="left: 50%; top: 70%;">TIME_WAIT</div>
+        <div id="lastAck" class="state" style="left: 75%; top: 65%;">LAST_ACK</div>
+        
         <svg>
-            <!-- Arrowhead Definition -->
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
                     <polygon points="0 0, 10 3.5, 0 7" fill="#333"></polygon>
                 </marker>
             </defs>
 
-            <!-- Arrow Lines -->
-            <!-- CLOSED -> LISTEN -->
             <line id="closedToListen" class="arrow"></line>
             <text id="closedToListenText_recv" class="condition-text"></text>
             <text id="closedToListenText_send" class="condition-text"></text>
 
-            <!-- CLOSED -> SYN_SENT -->
             <line id="closedToSynSent" class="arrow"></line>
             <text id="closedToSynSentText_recv" class="condition-text"></text>
             <text id="closedToSynSentText_send" class="condition-text"></text>
 
-            <!-- LISTEN -> SYN_RCVD -->
             <line id="listenToSynRcvd" class="arrow"></line>
             <text id="listenToSynRcvdText_recv" class="condition-text"></text>
             <text id="listenToSynRcvdText_send" class="condition-text"></text>
 
-            <!-- SYN_SENT -> SYN_RCVD -->
             <line id="synSentToSynRcvd" class="arrow"></line>
             <text id="synSentToSynRcvdText_recv" class="condition-text"></text>
             <text id="synSentToSynRcvdText_send" class="condition-text"></text>
 
-            <!-- SYN_SENT -> ESTABLISHED -->
             <line id="synSentToEstablished" class="arrow"></line>
             <text id="synSentToEstablishedText_recv" class="condition-text"></text>
             <text id="synSentToEstablishedText_send" class="condition-text"></text>
 
-            <!-- SYN_RCVD -> ESTABLISHED -->
             <line id="synRcvdToEstablished" class="arrow"></line>
             <text id="synRcvdToEstablishedText_recv" class="condition-text"></text>
             <text id="synRcvdToEstablishedText_send" class="condition-text"></text>
 
-            <!-- SYN_RCVD -> FIN_WAIT_1 -->
             <line id="synRcvdToFinWait1" class="arrow"></line>
             <text id="synRcvdToFinWait1Text_recv" class="condition-text"></text>
             <text id="synRcvdToFinWait1Text_send" class="condition-text"></text>
 
-            <!-- ESTABLISHED -> FIN_WAIT_1 -->
             <line id="establishedToFinWait1" class="arrow"></line>
             <text id="establishedToFinWait1Text_recv" class="condition-text"></text>
             <text id="establishedToFinWait1Text_send" class="condition-text"></text>
 
-            <!-- FIN_WAIT_1 -> FIN_WAIT_2 -->
             <line id="finWait1ToFinWait2" class="arrow"></line>
             <text id="finWait1ToFinWait2Text_recv" class="condition-text"></text>
             <text id="finWait1ToFinWait2Text_send" class="condition-text"></text>
 
-            <!-- FIN_WAIT_1 -> CLOSING -->
             <line id="finWait1ToClosing" class="arrow"></line>
             <text id="finWait1ToClosingText_recv" class="condition-text"></text>
             <text id="finWait1ToClosingText_send" class="condition-text"></text>
 
-            <!-- FIN_WAIT_1 -> TIME_WAIT -->
             <line id="finWait1ToTimeWait" class="arrow"></line>
             <text id="finWait1ToTimeWaitText_recv" class="condition-text"></text>
             <text id="finWait1ToTimeWaitText_send" class="condition-text"></text>
 
-            <!-- FIN_WAIT_2 -> TIME_WAIT -->
             <line id="finWait2ToTimeWait" class="arrow"></line>
             <text id="finWait2ToTimeWaitText_recv" class="condition-text"></text>
             <text id="finWait2ToTimeWaitText_send" class="condition-text"></text>
 
-            <!-- CLOSING -> TIME_WAIT -->
             <line id="closingToTimeWait" class="arrow"></line>
             <text id="closingToTimeWaitText_recv" class="condition-text"></text>
             <text id="closingToTimeWaitText_send" class="condition-text"></text>
 
-            <!-- ESTABLISHED -> CLOSE_WAIT -->
             <line id="establishedToCloseWait" class="arrow"></line>
             <text id="establishedToCloseWaitText_recv" class="condition-text"></text>
             <text id="establishedToCloseWaitText_send" class="condition-text"></text>
 
-            <!-- CLOSE_WAIT -> LAST_ACK -->
             <line id="closeWaitToLastAck" class="arrow"></line>
             <text id="closeWaitToLastAckText_recv" class="condition-text"></text>
             <text id="closeWaitToLastAckText_send" class="condition-text"></text>
 
-            <!-- SYN_SENT -> CLOSED -->
             <line id="synSentToClosed" class="arrow"></line>
             <text id="synSentToClosedText_recv" class="condition-text"></text>
             <text id="synSentToClosedText_send" class="condition-text"></text>
 
-            <!-- LAST_ACK -> CLOSED -->
             <line id="lastAckToClosed" class="arrow"></line>
             <text id="lastAckToClosedText_recv" class="condition-text"></text>
             <text id="lastAckToClosedText_send" class="condition-text"></text>
 
-            <!-- TIME_WAIT -> CLOSED -->
             <line id="timeWaitToClosed" class="arrow"></line>
             <text id="timeWaitToClosedText_recv" class="condition-text"></text>
             <text id="timeWaitToClosedText_send" class="condition-text"></text>
 
-            <!-- Common lines -->
             <line id="vertical_common_line" class="common_line"></line>
             <line id="commonToClosed" class="arrow"></line>
         </svg>
@@ -252,19 +290,18 @@
     <div class="rst-notification">
         <strong>Note:</strong> The TCP state diagram must consider the impact of <code>RST</code> packets. Any TCP connection in a state other than <code>CLOSED</code> or <code>LISTEN</code> or <code>TIMEWAIT</code> will immediately transition to the <code>CLOSED</code> state upon receiving an <code>RST</code> packet.
     </div>
+    <div id="open-page-reset" class="state" style="left: 10%; top: 65%;">RST Case</div>
+    <div id="open-page-lost" class="state" style="left: 10%; top: 70%;">Packet Loss Case</div>
+    
 
-    <button id="open-page-reset-button">RST Case</button>
-    <button id="open-page-lost-button">Packet Loss Case</button>
-      
     <script>
-        // Get all state nodes
         const states = {
             closed: {
                 element: document.getElementById('closed'),
                 callback: () => {
                     console.log('CLOSED state clicked');
                     animateState(states.closed.element);
-                    window.open('handshake.html', '_blank'); // Open external page
+                    window.open('handshake.html', '_blank');
                 }
             },
             listen: {
@@ -272,7 +309,7 @@
                 callback: () => {
                     console.log('LISTEN state clicked');
                     animateState(states.listen.element);
-                    window.open('handshake.html', '_blank'); // Open external page
+                    window.open('handshake.html', '_blank');
                 }
             },
             synSent: {
@@ -280,7 +317,7 @@
                 callback: () => {
                     console.log('SYN_SENT state clicked');
                     animateState(states.synSent.element);
-                    window.open('handshake.html', '_blank'); // Open external page
+                    window.open('handshake.html', '_blank');
                 }
             },
             synRcvd: {
@@ -288,7 +325,7 @@
                 callback: () => {
                     console.log('SYN_RCVD state clicked');
                     animateState(states.synRcvd.element);
-                    window.open('handshake_with_lost.html', '_blank'); // Open external page
+                    window.open('handshake_with_lost.html', '_blank');
                 }
             },
             established: {
@@ -296,7 +333,7 @@
                 callback: () => {
                     console.log('ESTABLISHED state clicked');
                     animateState(states.established.element);
-                    window.open('handshake.html', '_blank'); // Open external page
+                    window.open('handshake.html', '_blank');
                 }
             },
             finWait1: {
@@ -304,7 +341,7 @@
                 callback: () => {
                     console.log('FIN_WAIT_1 state clicked');
                     animateState(states.finWait1.element);
-                    window.open('tcp_normal_close.html', '_blank'); // Open external page
+                    window.open('tcp_normal_close.html', '_blank');
                 }
             },
             closing: {
@@ -312,7 +349,7 @@
                 callback: () => {
                     console.log('CLOSING state clicked');
                     animateState(states.closing.element);
-                    window.open('tcp_simultaneous_close.html', '_blank'); // Open external page
+                    window.open('tcp_simultaneous_close.html', '_blank');
                 }
             },
             finWait2: {
@@ -320,7 +357,7 @@
                 callback: () => {
                     console.log('FIN_WAIT_2 state clicked');
                     animateState(states.finWait2.element);
-                    window.open('tcp_normal_close.html', '_blank'); // Open external page
+                    window.open('tcp_normal_close.html', '_blank');
                 }
             },
             closeWait: {
@@ -328,7 +365,7 @@
                 callback: () => {
                     console.log('CLOSE_WAIT state clicked');
                     animateState(states.closeWait.element);
-                    window.open('tcp_abnormal_close.html', '_blank'); // Open external page
+                    window.open('tcp_abnormal_close.html', '_blank');
                 }
             },
             lastAck: {
@@ -336,7 +373,7 @@
                 callback: () => {
                     console.log('LAST_ACK state clicked');
                     animateState(states.lastAck.element);
-                    window.open('tcp_normal_close.html', '_blank'); // Open external page
+                    window.open('tcp_normal_close.html', '_blank');
                 }
             },
             timeWait: {
@@ -344,33 +381,55 @@
                 callback: () => {
                     console.log('TIME_WAIT state clicked');
                     animateState(states.timeWait.element);
-                    window.open('tcp_timeWait.html', '_blank'); // Open external page
+                    window.open('tcp_timeWait.html', '_blank');
                 }
             }
         };
 
-        // Function to animate a state
+        const cases = {
+            reset: {
+                element: document.getElementById('open-page-reset'),
+                callback: () => {
+                    animateState(cases.reset.element);
+                    window.open('elb_timeout.html', '_blank');
+                }
+            },
+            lost: {
+                element: document.getElementById('open-page-lost'),
+                callback: () => {
+                    animateState(cases.lost.element);
+                    window.open('handshake_with_lost.html', '_blank');
+                }
+            }            
+        }
+
         function animateState(element) {
             element.classList.add('animated');
             setTimeout(() => {
                 element.classList.remove('animated');
-            }, 500); // Match the animation duration
+            }, 500);
         }
 
-        // Add click event listeners to all states
         Object.values(states).forEach(state => {
             state.element.addEventListener('click', () => {
-                // Remove active class from all states
                 Object.values(states).forEach(s => s.element.classList.remove('active'));
-                // Add active class to the clicked state
                 state.element.classList.add('active');
-                // Execute the callback function
                 if (state.callback) {
                     state.callback();
                 }
             });
         });
-        
+
+        Object.values(cases).forEach(tcpcase => {
+            tcpcase.element.addEventListener('click', () => {
+                Object.values(cases).forEach(s => s.element.classList.remove('active'));
+                tcpcase.element.classList.add('active');
+                if (tcpcase.callback) {
+                    tcpcase.callback();
+                }
+            });
+        });
+
         // Get all arrows
         const arrows = {
             closedToListen: document.getElementById('closedToListen'),
@@ -510,19 +569,21 @@
 
         // Update arrow positions and text
         function updateArrows() {
+            const isMobile = window.innerWidth <= 600; // Check if mobile
+
             // CLOSED -> LISTEN
             arrows.closedToListen.setAttribute('x1', getBottomCenter(states.closed.element).x);
             arrows.closedToListen.setAttribute('y1', getBottomCenter(states.closed.element).y);
             arrows.closedToListen.setAttribute('x2', getTopCenter(states.listen.element).x);
             arrows.closedToListen.setAttribute('y2', getTopCenter(states.listen.element).y);
-            
+
             const closedToListenX = (parseFloat(arrows.closedToListen.getAttribute('x1')) + parseFloat(arrows.closedToListen.getAttribute('x2'))) / 2;
             const closedToListenY = (parseFloat(arrows.closedToListen.getAttribute('y1')) + parseFloat(arrows.closedToListen.getAttribute('y2'))) / 2;
 
-            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - 120);
+            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - (isMobile ? 30 : 120));
             arrows_text.closedToListen_recv.setAttribute('y', closedToListenY - 8);
             arrows_text.closedToListen_recv.textContent = "app:passive open";
-            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - 120);
+            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - (isMobile ? 30 : 120));
             arrows_text.closedToListen_send.setAttribute('y', closedToListenY + 12);
             arrows_text.closedToListen_send.textContent = "send:nothing";
 
@@ -535,10 +596,10 @@
             const closedToSynSentX = (parseFloat(arrows.closedToSynSent.getAttribute('x1')) + parseFloat(arrows.closedToSynSent.getAttribute('x2'))) / 2;
             const closedToSynSentY = (parseFloat(arrows.closedToSynSent.getAttribute('y1')) + parseFloat(arrows.closedToSynSent.getAttribute('y2'))) / 2;
 
-            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + 25);
+            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + (isMobile ? 5 : 25));
             arrows_text.closedToSynSent_recv.setAttribute('y', closedToSynSentY - 10);
             arrows_text.closedToSynSent_recv.textContent = "app:active open";
-            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + 25);
+            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + (isMobile ? 5 : 25));
             arrows_text.closedToSynSent_send.setAttribute('y', closedToSynSentY + 10);
             arrows_text.closedToSynSent_send.textContent = "send:SYN";
 
@@ -551,11 +612,11 @@
             const listenToSynRcvdX = (parseFloat(arrows.listenToSynRcvd.getAttribute('x1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('x2'))) / 2;
             const listenToSynRcvdY = (parseFloat(arrows.listenToSynRcvd.getAttribute('y1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('y2'))) / 2;
 
-            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - 50);
-            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - 40);
+            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - (isMobile ? 15 : 50));
+            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - (isMobile ? 10 : 40));
             arrows_text.listenToSynRcvd_recv.textContent = "recv:SYN";
-            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX - 50);
-            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - 20);
+            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX - (isMobile ? 15 : 50));
+            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - (isMobile ? 5 : 20));
             arrows_text.listenToSynRcvd_send.textContent = "send:SYN,ACK";
 
             // SYN_SENT -> SYN_RCVD
@@ -813,40 +874,6 @@
         // Initial update
         updateArrows();
 
-        const right_most_x1 = parseFloat(arrows.vertical_common_line.getAttribute('x1'));
-        const right_most_y1 = parseFloat(arrows.vertical_common_line.getAttribute('y1'));
-
-        
-        document.addEventListener("DOMContentLoaded", function() {
-            const openPageButton = document.getElementById("open-page-reset-button");
-        
-            const topPosition = right_most_y1 + 50; 
-            const leftPosition = right_most_x1 + 100;
-        
-            openPageButton.style.top = `${topPosition}px`;
-            openPageButton.style.left = `${leftPosition}px`;
-        
-            // Open new page on button click
-            openPageButton.addEventListener("click", function() {
-                window.open('elb_timeout.html', '_blank');
-            });
-        });
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const openPageButton = document.getElementById("open-page-lost-button");
-        
-            const topPosition = right_most_y1 + 85; 
-            const leftPosition = right_most_x1 + 100;        
-            openPageButton.style.top = `${topPosition}px`;
-            openPageButton.style.left = `${leftPosition}px`;
-        
-            // Open new page on button click
-            openPageButton.addEventListener("click", function() {
-                window.open('handshake_with_lost.html', '_blank');
-            });
-        });
-        
-        
         // Listen for window resize events
         window.addEventListener('resize', updateArrows);
     </script>
