@@ -190,7 +190,7 @@
 </head>
 <body>
     <div class="container">
-        <div id="closed" class="state" style="left: 50%; top: 5%;">CLOSED</div>
+        <div id="closed" class="state" style="left: 50%; top: 2%;">CLOSED</div>
         <div id="listen" class="state" style="left: 50%; top: 13%;">LISTEN</div>
         <div id="synRcvd" class="state" style="left: 25%; top: 25%;">SYN_RCVD</div>
         <div id="synSent" class="state" style="left: 75%; top: 25%;">SYN_SENT</div>
@@ -290,7 +290,7 @@
     <div class="rst-notification">
         <strong>Note:</strong> The TCP state diagram must consider the impact of <code>RST</code> packets. Any TCP connection in a state other than <code>CLOSED</code> or <code>LISTEN</code> or <code>TIMEWAIT</code> will immediately transition to the <code>CLOSED</code> state upon receiving an <code>RST</code> packet.
     </div>
-    <div id="open-page-reset" class="state" style="left: 10%; top: 65%;">RST Case</div>
+    <div id="open-page-reset" class="state" style="left: 10%; top: 60%;">RST Case</div>
     <div id="open-page-lost" class="state" style="left: 10%; top: 70%;">Packet Loss Case</div>
     
 
@@ -569,8 +569,6 @@
 
         // Update arrow positions and text
         function updateArrows() {
-            const isMobile = window.innerWidth <= 600; // Check if mobile
-
             // CLOSED -> LISTEN
             arrows.closedToListen.setAttribute('x1', getBottomCenter(states.closed.element).x);
             arrows.closedToListen.setAttribute('y1', getBottomCenter(states.closed.element).y);
@@ -580,10 +578,10 @@
             const closedToListenX = (parseFloat(arrows.closedToListen.getAttribute('x1')) + parseFloat(arrows.closedToListen.getAttribute('x2'))) / 2;
             const closedToListenY = (parseFloat(arrows.closedToListen.getAttribute('y1')) + parseFloat(arrows.closedToListen.getAttribute('y2'))) / 2;
 
-            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - (isMobile ? 30 : 120));
+            arrows_text.closedToListen_recv.setAttribute('x', closedToListenX - 100);
             arrows_text.closedToListen_recv.setAttribute('y', closedToListenY - 8);
             arrows_text.closedToListen_recv.textContent = "app:passive open";
-            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - (isMobile ? 30 : 120));
+            arrows_text.closedToListen_send.setAttribute('x', closedToListenX - 100);
             arrows_text.closedToListen_send.setAttribute('y', closedToListenY + 12);
             arrows_text.closedToListen_send.textContent = "send:nothing";
 
@@ -596,11 +594,11 @@
             const closedToSynSentX = (parseFloat(arrows.closedToSynSent.getAttribute('x1')) + parseFloat(arrows.closedToSynSent.getAttribute('x2'))) / 2;
             const closedToSynSentY = (parseFloat(arrows.closedToSynSent.getAttribute('y1')) + parseFloat(arrows.closedToSynSent.getAttribute('y2'))) / 2;
 
-            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + (isMobile ? 5 : 25));
-            arrows_text.closedToSynSent_recv.setAttribute('y', closedToSynSentY - 10);
+            arrows_text.closedToSynSent_recv.setAttribute('x', closedToSynSentX + 50);
+            arrows_text.closedToSynSent_recv.setAttribute('y', closedToSynSentY - 8);
             arrows_text.closedToSynSent_recv.textContent = "app:active open";
-            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + (isMobile ? 5 : 25));
-            arrows_text.closedToSynSent_send.setAttribute('y', closedToSynSentY + 10);
+            arrows_text.closedToSynSent_send.setAttribute('x', closedToSynSentX + 50);
+            arrows_text.closedToSynSent_send.setAttribute('y', closedToSynSentY + 12);
             arrows_text.closedToSynSent_send.textContent = "send:SYN";
 
             // LISTEN -> SYN_RCVD
@@ -612,11 +610,11 @@
             const listenToSynRcvdX = (parseFloat(arrows.listenToSynRcvd.getAttribute('x1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('x2'))) / 2;
             const listenToSynRcvdY = (parseFloat(arrows.listenToSynRcvd.getAttribute('y1')) + parseFloat(arrows.listenToSynRcvd.getAttribute('y2'))) / 2;
 
-            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - (isMobile ? 15 : 50));
-            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - (isMobile ? 10 : 40));
+            arrows_text.listenToSynRcvd_recv.setAttribute('x', listenToSynRcvdX - 30);
+            arrows_text.listenToSynRcvd_recv.setAttribute('y', listenToSynRcvdY - 50);
             arrows_text.listenToSynRcvd_recv.textContent = "recv:SYN";
-            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX - (isMobile ? 15 : 50));
-            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - (isMobile ? 5 : 20));
+            arrows_text.listenToSynRcvd_send.setAttribute('x', listenToSynRcvdX- 30);
+            arrows_text.listenToSynRcvd_send.setAttribute('y', listenToSynRcvdY - 30);
             arrows_text.listenToSynRcvd_send.textContent = "send:SYN,ACK";
 
             // SYN_SENT -> SYN_RCVD
@@ -661,10 +659,10 @@
             const synRcvdToEstablishedY = (parseFloat(arrows.synRcvdToEstablished.getAttribute('y1')) + parseFloat(arrows.synRcvdToEstablished.getAttribute('y2'))) / 2;
 
             arrows_text.synRcvdToEstablished_recv.setAttribute('x', synRcvdToEstablishedX - 20);
-            arrows_text.synRcvdToEstablished_recv.setAttribute('y', synRcvdToEstablishedY + 20);
+            arrows_text.synRcvdToEstablished_recv.setAttribute('y', synRcvdToEstablishedY + 30);
             arrows_text.synRcvdToEstablished_recv.textContent = "recv:ACK";
             arrows_text.synRcvdToEstablished_send.setAttribute('x', synRcvdToEstablishedX - 20);
-            arrows_text.synRcvdToEstablished_send.setAttribute('y', synRcvdToEstablishedY + 35);
+            arrows_text.synRcvdToEstablished_send.setAttribute('y', synRcvdToEstablishedY + 45);
             arrows_text.synRcvdToEstablished_send.textContent = "send:nothing";
 
             // SYN_RCVD -> FIN_WAIT_1
@@ -814,39 +812,39 @@
             // SYN_SENT -> CLOSED
             arrows.synSentToClosed.setAttribute('x1', getRightCenter(states.synSent.element).x);
             arrows.synSentToClosed.setAttribute('y1', getRightCenter(states.synSent.element).y);
-            arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.synSentToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 150);
             arrows.synSentToClosed.setAttribute('y2', getRightCenter(states.synSent.element).y);
 
             const synSentToClosedX = (parseFloat(arrows.synSentToClosed.getAttribute('x1')) + parseFloat(arrows.synSentToClosed.getAttribute('x2'))) / 2;
             const synSentToClosedY = (parseFloat(arrows.synSentToClosed.getAttribute('y1')) + parseFloat(arrows.synSentToClosed.getAttribute('y2'))) / 2;
 
-            arrows_text.synSentToClosed_recv.setAttribute('x', synSentToClosedX - 60);
+            arrows_text.synSentToClosed_recv.setAttribute('x', synSentToClosedX - 35);
             arrows_text.synSentToClosed_recv.setAttribute('y', synSentToClosedY - 8);
             arrows_text.synSentToClosed_recv.textContent = "app:close";
-            arrows_text.synSentToClosed_send.setAttribute('x', synSentToClosedX - 60);
+            arrows_text.synSentToClosed_send.setAttribute('x', synSentToClosedX - 35);
             arrows_text.synSentToClosed_send.setAttribute('y', synSentToClosedY + 12);
             arrows_text.synSentToClosed_send.textContent = "or timeout";
 
             // LAST_ACK -> CLOSED
             arrows.lastAckToClosed.setAttribute('x1', getRightCenter(states.lastAck.element).x);
             arrows.lastAckToClosed.setAttribute('y1', getRightCenter(states.lastAck.element).y);
-            arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.lastAckToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 150);
             arrows.lastAckToClosed.setAttribute('y2', getRightCenter(states.lastAck.element).y);
 
             const lastAckToClosedX = (parseFloat(arrows.lastAckToClosed.getAttribute('x1')) + parseFloat(arrows.lastAckToClosed.getAttribute('x2'))) / 2;
             const lastAckToClosedY = (parseFloat(arrows.lastAckToClosed.getAttribute('y1')) + parseFloat(arrows.lastAckToClosed.getAttribute('y2'))) / 2;
 
-            arrows_text.lastAckToClosed_recv.setAttribute('x', lastAckToClosedX -  20);
+            arrows_text.lastAckToClosed_recv.setAttribute('x', lastAckToClosedX -  35);
             arrows_text.lastAckToClosed_recv.setAttribute('y', lastAckToClosedY - 8);
             arrows_text.lastAckToClosed_recv.textContent = "recv:ACK";
-            arrows_text.lastAckToClosed_send.setAttribute('x', lastAckToClosedX - 20);
+            arrows_text.lastAckToClosed_send.setAttribute('x', lastAckToClosedX - 35);
             arrows_text.lastAckToClosed_send.setAttribute('y', lastAckToClosedY + 12);
             arrows_text.lastAckToClosed_send.textContent = "send:nothing";
 
             // TIME_WAIT -> CLOSED
             arrows.timeWaitToClosed.setAttribute('x1', getRightCenter(states.timeWait.element).x);
             arrows.timeWaitToClosed.setAttribute('y1', getRightCenter(states.timeWait.element).y);
-            arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.timeWaitToClosed.setAttribute('x2', getTopCenter(states.synSent.element).x + 150);
             arrows.timeWaitToClosed.setAttribute('y2', getRightCenter(states.timeWait.element).y);
 
             const timeWaitToClosedX = (parseFloat(arrows.timeWaitToClosed.getAttribute('x1')) + parseFloat(arrows.timeWaitToClosed.getAttribute('x2'))) / 2;
@@ -860,12 +858,12 @@
             arrows_text.timeWaitToClosed_send.textContent = "send:nothing";
 
             // Common lines
-            arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.vertical_common_line.setAttribute('x1', getTopCenter(states.synSent.element).x + 150);
             arrows.vertical_common_line.setAttribute('y1', getRightCenter(states.timeWait.element).y);
-            arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent.element).x + 200);
+            arrows.vertical_common_line.setAttribute('x2', getTopCenter(states.synSent.element).x + 150);
             arrows.vertical_common_line.setAttribute('y2', getRightCenter(states.closed.element).y);
 
-            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + 200);
+            arrows.commonToClosed.setAttribute('x1', getTopCenter(states.synSent.element).x + 150);
             arrows.commonToClosed.setAttribute('y1', getRightCenter(states.closed.element).y);
             arrows.commonToClosed.setAttribute('x2', getRightCenter(states.closed.element).x);
             arrows.commonToClosed.setAttribute('y2', getRightCenter(states.closed.element).y);
