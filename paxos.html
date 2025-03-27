@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paxos Visualization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    canvas {
+      margin-left: 240px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button.active {
+      background-color: #28a745;
+      box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5);
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 10px;
+    }
+    .speed-control {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .speed-control label {
+      margin-right: 10px;
+    }
+    .status {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+    .info-panel {
+      background-color: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      max-width: 600px;
+    }
+    .majority-tracker {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    .log-panel {
+      width: 800px;
+      height: 150px;
+      overflow-y: auto;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+      font-family: monospace;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #34495e;
+      padding-bottom: 5px;
+    }
+    .log-time {
+      color: #3498db;
+    }
+    .log-event {
+      color: #2ecc71;
+    }
+    .log-warning {
+      color: #f39c12;
+    }
+    .log-error {
+      color: #e74c3c;
+    }
+    .timeout-control {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .timeout-control label {
+      margin-right: 10px;
+    }
+    .issue-explanation {
+      position: absolute;
+      left: 20px;
+      top: 150px;
+      width: 200px;
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
+    }
+    .issue-explanation h3 {
+      margin-top: 0;
+      color: #343a40;
+      font-size: 16px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .issue-explanation ul {
+      padding-left: 20px;
+      margin: 10px 0;
+    }
+    .issue-icon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .issue-icon.network {
+      background-color: #ffc107;
+    }
+    .issue-icon.crash {
+      background-color: #dc3545;
+    }
+    .issue-icon.slow {
+      background-color: blue;
+    }
+    .issue-icon.unknown {
+      background-color: #17a2b8;
+    }
+    .current-issue {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #495057;
+    }
+  </style>
+</head>
+<body>
+  <h1>Multi-leader Paxos Algorithm</h1>
+  
+  <div class="issue-explanation">
+    <h3>Node Issue Types</h3>
+    <ul>
+      <li><span class="issue-icon network"></span> Network Issue - Message delay/loss</li>
+      <li><span class="issue-icon crash"></span> Node Crash - Completely unavailable</li>
+      <li><span class="issue-icon slow"></span> Slow Response - Processing delay</li>
+      <li><span class="issue-icon unknown"></span> Unknown Issue - Unknown</li>
+    </ul>
+    <div class="current-issue" id="currentIssue">
+      No current node issues
+    </div>
+  </div>
+  
+  <canvas id="paxosCanvas" width="800" height="500"></canvas>
+  
+  <div class="controls">
+    <div class="control-group">
+      <div>
+        <button id="startButton">Start</button>
+        <button id="pauseButton">Pause</button>
+        <button id="resetButton">Reset</button>
+      </div>
+      <div class="speed-control">
+        <label for="speedSlider">Speed:</label>
+        <input type="range" id="speedSlider" min="1" max="10" value="5">
+        <span id="speedValue">5x</span>
+      </div>
+      <div class="timeout-control">
+        <label for="timeoutSlider">Timeout:</label>
+        <input type="range" id="timeoutSlider" min="0" max="100" value="20">
+        <span id="timeoutValue">20ms</span>
+      </div>
+      <div class="majority-tracker" id="majorityStatus">
+        Majority: Waiting for first phase...
+      </div>
+    </div>
+    <div class="control-group">
+      <div>
+        <button id="fail1Node">1 Node Issue</button>
+        <button id="fail2Nodes">2 Nodes Issue</button>
+        <button id="fail3Nodes">3 Nodes Issue</button>
+        <button id="failProposerAfterAccept">Fail Proposer After Accept</button>
+        <button id="recoverAll">Recover All</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="status" id="statusText">Status: Ready</div>
+  
+  <div class="info-panel" id="infoPanel">
+    <h3>Optimized Paxos Rules:</h3>
+    <p><strong>1.</strong> Initial Prepare phase only on start or leader change</p>
+    <p><strong>2.</strong> Node 2 sends OLD ACCEPT only after Prepare phase</p>
+    <p><strong>3.</strong> Other cases proceed directly to Accept phase</p>
+    <p><strong>Current State:</strong> All nodes operational - System fully available</p>
+  </div>
+
+  <div class="log-panel" id="logPanel">
+    <div class="log-entry"><span class="log-time">[System]</span> <span class="log-event">Paxos visualization initialized</span></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('paxosCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('statusText');
+    const majorityStatus = document.getElementById('majorityStatus');
+    const infoPanel = document.getElementById('infoPanel');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const timeoutSlider = document.getElementById('timeoutSlider');
+    const timeoutValue = document.getElementById('timeoutValue');
+    const logPanel = document.getElementById('logPanel');
+    const failProposerAfterAcceptBtn = document.getElementById('failProposerAfterAccept');
+
+    const nodes = [
+      { x: 150, y: 250, color: '#3498db', isDown: false, id: 1, role: 'Proposer' },
+      { x: 350, y: 100, color: '#2ecc71', isDown: false, id: 2, role: 'Acceptor' },
+      { x: 550, y: 100, color: '#e67e22', isDown: false, id: 3, role: 'Acceptor' },
+      { x: 400, y: 400, color: '#9b59b6', isDown: false, id: 4, role: 'Acceptor' },
+      { x: 600, y: 400, color: '#1abc9c', isDown: false, id: 5, role: 'Acceptor' }
+    ];
+
+    let animationId;
+    let isPaused = false;
+    let currentPhase = 0;
+    let lastTimestamp = 0;
+    const baseSpeed = 0.002;
+    let speedMultiplier = 5;
+    let timeoutDuration = 20;
+    const phases = ['Prepare', 'Promise', 'Accept', 'Accepted', 'Learn'];
+    
+    let activeMessages = [];
+    let sentMessages = new Set();
+    let receivedPromises = 0;
+    let receivedAcceptances = 0;
+    const majorityThreshold = Math.floor(nodes.length / 2) + 1;
+    let promisedNodes = new Set();
+    let acceptedNodes = new Set();
+    let learnedNodes = new Set();
+    let learnSent = false;
+    let currentProposer = nodes[0];
+    let isRunning = false;
+    let currentRound = 0;
+    let shouldFailProposerAfterAccept = false;
+    let isProposerFailed = false;
+    let timeoutId = null;
+    let acceptedValue = null;
+    let highestAcceptedValue = null;
+    let needsPreparePhase = true;
+    let isOldAcceptScenario = false;
+    let proposerFailedAfterAccept = false;
+
+    function updateCurrentIssue() {
+      const issuePanel = document.getElementById('currentIssue');
+      const downNodes = nodes.filter(n => n.isDown);
+      
+      if (downNodes.length === 0) {
+        issuePanel.innerHTML = "No current node issues";
+        issuePanel.style.color = "#495057";
+        return;
+      }
+
+      let issueText = "Current Node Issues:<br>";
+      downNodes.forEach(node => {
+        const issueTypes = [
+          {type: "Network Issue", icon: "network", color: "#ffc107"},
+          {type: "Node Crash", icon: "crash", color: "#dc3545"},
+          {type: "Slow Response", icon: "slow", color: "blue"},
+          {type: "Unknown Issue", icon: "unknown", color: "#17a2b8"}
+        ];
+        const randomIssue = issueTypes[3];
+        
+        issueText += `
+          <div style="margin-top: 5px;">
+            <span style="color: ${randomIssue.color}">Node ${node.id}</span>
+          </div>
+        `;
+      });
+
+      issuePanel.innerHTML = issueText;
+    }
+
+    function addLogEntry(message, type = 'event') {
+      const now = new Date();
+      const timeStr = now.toTimeString().substring(0, 8) + '.' + now.getMilliseconds().toString().padStart(3, '0');
+      
+      const logEntry = document.createElement('div');
+      logEntry.className = 'log-entry';
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.textContent = `[${timeStr}]`;
+      
+      const messageSpan = document.createElement('span');
+      messageSpan.className = `log-${type}`;
+      messageSpan.textContent = ` ${message}`;
+      
+      logEntry.appendChild(timeSpan);
+      logEntry.appendChild(messageSpan);
+      logPanel.appendChild(logEntry);
+      
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    speedSlider.addEventListener('input', function() {
+      speedMultiplier = parseInt(this.value);
+      speedValue.textContent = speedMultiplier + 'x';
+      addLogEntry(`Animation speed changed to ${speedMultiplier}x`);
+    });
+
+    timeoutSlider.addEventListener('input', function() {
+      timeoutDuration = parseInt(this.value);
+      timeoutValue.textContent = timeoutDuration + 'ms';
+      addLogEntry(`Timeout duration changed to ${timeoutDuration}ms`);
+    });
+
+    function calculateDistance(x1, y1, x2, y2) {
+      return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    }
+
+    function drawNode(node) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = node.isDown ? '#bdc3c7' : node.color;
+      ctx.fill();
+      ctx.strokeStyle = '#34495e';
+      ctx.stroke();
+      
+      ctx.fillStyle = 'black';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText(`Node ${node.id}`, node.x, node.y + 30);
+      
+      if (node.isDown) {
+        ctx.fillStyle = '#e67e22';
+        ctx.fillText('ISSUE', node.x, node.y + 50);
+      } else if (learnedNodes.has(node.id)) {
+        ctx.fillStyle = '#27ae60';
+        ctx.fillText('LEARNED', node.x, node.y - 30);
+      } else if (acceptedNodes.has(node.id)) {
+        ctx.fillStyle = '#27ae60';
+        ctx.fillText('ACCEPTED', node.x, node.y - 30);
+      } else if (promisedNodes.has(node.id)) {
+        ctx.fillStyle = '#27ae60';
+        ctx.fillText('PROMISED', node.x, node.y - 30);
+      } else {
+        ctx.fillStyle = '#34495e';
+        ctx.fillText(node.role, node.x, node.y - 30);
+      }
+    }
+
+    function drawArrow(fromX, fromY, toX, toY, color) {
+      const headLength = 10;
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const angle = Math.atan2(dy, dx);
+      const actualToX = toX - 20 * Math.cos(angle);
+      const actualToY = toY - 20 * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(actualToX, actualToY);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(actualToX, actualToY);
+      ctx.lineTo(actualToX - headLength * Math.cos(angle - Math.PI/6), 
+                 actualToY - headLength * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(actualToX - headLength * Math.cos(angle + Math.PI/6), 
+                 actualToY - headLength * Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawMessageAnimation(message) {
+      const { from, to, progress, color, label } = message;
+      const currentX = from.x + (to.x - from.x) * progress;
+      const currentY = from.y + (to.y - from.y) * progress;
+      
+      drawArrow(from.x, from.y, currentX, currentY, color);
+      
+      ctx.beginPath();
+      ctx.arc(currentX, currentY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      
+      ctx.fillStyle = '#34495e';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, currentX, currentY - 15);
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      nodes.forEach(drawNode);
+      
+      activeMessages.forEach(msg => {
+        drawMessageAnimation(msg);
+      });
+      
+      statusText.textContent = `Phase: ${phases[currentPhase]} (Round ${currentRound})`;
+      updateMajorityStatus();
+    }
+
+    function hasMajority(receivedCount) {
+      return receivedCount >= majorityThreshold;
+    }
+
+    function updateMajorityStatus() {
+      let status = '';
+      switch(currentPhase) {
+        case 1:
+          status = `Promises: ${receivedPromises}/${majorityThreshold} (${hasMajority(receivedPromises) ? 'MAJORITY REACHED' : 'waiting'})`;
+          break;
+        case 3:
+          status = `Acceptances: ${receivedAcceptances}/${majorityThreshold} (${hasMajority(receivedAcceptances) ? 'MAJORITY REACHED' : 'waiting'})`;
+          break;
+        default:
+          status = `Majority required: ${majorityThreshold} nodes`;
+      }
+      majorityStatus.textContent = status;
+    }
+
+    function sendMessage(from, to, label, color, onReceive, onComplete) {
+      const messageKey = `${from.id}-${to.id}-${label}-${currentRound}`;
+      
+      if (sentMessages.has(messageKey)) {
+        return;
+      }
+      
+      sentMessages.add(messageKey);
+      
+      const distance = calculateDistance(from.x, from.y, to.x, to.y);
+      const isFailed = to.isDown || (proposerFailedAfterAccept && from.id === 1);
+      
+      addLogEntry(`${from.role} Node ${from.id} sending ${label} to Node ${to.id}${isFailed ? ' (target has issues)' : ''}`);
+      
+      const message = {
+        from: from,
+        to: to,
+        progress: 0,
+        color: color,
+        label: label,
+        isFailed: isFailed,
+        messageKey: messageKey,
+        speed: baseSpeed * speedMultiplier / (distance / 100),
+        onReceive: onReceive,
+        onComplete: () => {
+          if (!isFailed && onComplete) {
+            onComplete();
+          } else if (isFailed) {
+            addLogEntry(`Message to Node ${to.id} failed (target has issues)`, "warning");
+          }
+          activeMessages = activeMessages.filter(m => m !== message);
+        }
+      };
+      
+      activeMessages.push(message);
+      return message;
+    }
+
+    function electNewProposer() {
+      const newProposer = nodes.find(node => node.id === 2 && !node.isDown);
+      
+      if (newProposer) {
+        nodes.forEach(node => {
+          if (node.role === 'Proposer' && node.id !== newProposer.id) {
+            node.role = 'Acceptor';
+          }
+        });
+        
+        newProposer.role = 'Proposer';
+        currentProposer = newProposer;
+        addLogEntry(`Node ${newProposer.id} elected as new Proposer`, "event");
+        return true;
+      }
+      
+      addLogEntry("No available node to become new Proposer", "error");
+      return false;
+    }
+
+    function failCurrentProposer() {
+      if (!currentProposer || isProposerFailed || currentProposer.id !== 1) return;
+      
+      isProposerFailed = true;
+      proposerFailedAfterAccept = true;
+      addLogEntry(`Proposer Node ${currentProposer.id} failed after receiving ACCEPTED from Node 2`, "warning");
+      currentProposer.isDown = true;
+      
+      activeMessages = activeMessages.filter(msg => {
+        if (msg.from.id === 1) {
+          addLogEntry(`Dropping ${msg.label} message to Node ${msg.to.id} due to proposer failure`, "warning");
+          return false;
+        }
+        return true;
+      });
+      
+      isOldAcceptScenario = true;
+      
+      if (electNewProposer()) {
+        needsPreparePhase = true;
+        startTimeoutForNewProposer();
+      } else {
+        isRunning = false;
+      }
+      
+      updateCurrentIssue();
+      drawScene();
+    }
+
+    function startTimeoutForNewProposer() {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      addLogEntry(`Starting ${timeoutDuration}ms timeout for Node 2 to take over`, "warning");
+      
+      timeoutId = setTimeout(() => {
+        if (isRunning && currentProposer.id === 2 && !isPaused) {
+          addLogEntry(`Timeout reached - Node 2 initiating new Prepare phase`, "event");
+          currentPhase = 0;
+          receivedPromises = 0;
+          promisedNodes.clear();
+          startPreparePhase();
+        }
+      }, timeoutDuration);
+    }
+
+    function startPreparePhase() {
+      if (!isRunning) return;
+      
+      currentPhase = 0;
+      receivedPromises = 0;
+      promisedNodes.clear();
+      acceptedNodes.clear();
+      learnedNodes.clear();
+      learnSent = false;
+      isProposerFailed = false;
+      proposerFailedAfterAccept = false;
+      activeMessages = [];
+      sentMessages.clear();
+      
+      if (isOldAcceptScenario) {
+        addLogEntry(`[OLD ACCEPT PREPARE] Starting Prepare phase before sending OLD ACCEPT`, "warning");
+      } else {
+        addLogEntry(`Starting Prepare phase (Round ${currentRound})`, "event");
+      }
+      
+      nodes.forEach(node => {
+        if (node.isDown) return;
+        
+        sendMessage(
+          currentProposer,
+          node,
+          'PREPARE',
+          currentProposer.color,
+          () => {
+            promisedNodes.add(node.id);
+            addLogEntry(`Node ${node.id} received PREPARE and is now PROMISED`);
+          },
+          !node.isDown ? () => {
+            sendMessage(
+              node,
+              currentProposer,
+              'PROMISE',
+              node.color,
+              null,
+              () => {
+                receivedPromises++;
+                addLogEntry(`Proposer received PROMISE from Node ${node.id} (${receivedPromises}/${majorityThreshold})`);
+                
+                if (hasMajority(receivedPromises) && currentPhase == 0) {
+                  currentPhase = 1;
+                  if (isOldAcceptScenario) {
+                    addLogEntry(`[OLD ACCEPT READY] Majority reached, will send OLD ACCEPT next`);
+                  }
+                  startAcceptPhase();
+                }
+              }
+            );
+          } : null
+        );
+      });
+    }
+
+    function startAcceptPhase() {
+      if (!isRunning) return;
+      
+      currentPhase = 2;
+      receivedAcceptances = 0;
+      learnedNodes.clear();
+      
+      acceptedValue = isOldAcceptScenario ? `Recovered-Value-Round${currentRound}` : `Value-Round${currentRound}`;
+      highestAcceptedValue = acceptedValue;
+      
+      if (shouldFailProposerAfterAccept && currentProposer.id === 1) {
+        addLogEntry(`System will fail Node 1 after Node 2 accepts its value`, "warning");
+        
+        addLogEntry(`Starting Accept phase with Proposer Node ${currentProposer.id} proposing: ${acceptedValue}`, "event");
+            
+        nodes.forEach(node => {
+          if (node.isDown) return;
+          if (node.id == 2) {
+          
+            const isOldAccept = (currentProposer.id === 2 && isOldAcceptScenario);
+            const acceptLabel = isOldAccept ? 'ACCEPT (OLD)' : 'ACCEPT';
+            const messageColor = isOldAccept ? '#e67e22' : currentProposer.color;
+            
+            sendMessage(
+              currentProposer,
+              node,
+              acceptLabel,
+              messageColor,
+              () => {
+                if (node.id === 2 || !proposerFailedAfterAccept) {
+                  acceptedNodes.add(node.id);
+                  addLogEntry(`Node ${node.id} received ACCEPT and is now ACCEPTED`);
+                }
+              },
+              !node.isDown ? () => {
+                setTimeout(() => {
+                  failCurrentProposer(); 
+                }, 0); 
+              } : null
+            );
+          };
+        });
+      } else {
+            
+        addLogEntry(`Starting Accept phase with Proposer Node ${currentProposer.id} proposing: ${acceptedValue}`, "event");
+            
+        nodes.forEach(node => {
+          if (node.isDown) return;
+          
+          const isOldAccept = (currentProposer.id === 2 && isOldAcceptScenario);
+          const acceptLabel = isOldAccept ? 'ACCEPT (OLD)' : 'ACCEPT';
+          const messageColor = isOldAccept ? '#e67e22' : currentProposer.color;
+          
+          sendMessage(
+            currentProposer,
+            node,
+            acceptLabel,
+            messageColor,
+            () => {
+              if (node.id === 2 || !proposerFailedAfterAccept) {
+                acceptedNodes.add(node.id);
+                addLogEntry(`Node ${node.id} received ACCEPT and is now ACCEPTED`);
+              }
+            },
+            !node.isDown ? () => {
+              if (!proposerFailedAfterAccept) {
+                sendMessage(
+                  node,
+                  currentProposer,
+                  'ACCEPTED',
+                  node.color,
+                  null,
+                  () => {
+                    receivedAcceptances++;
+                    addLogEntry(`Proposer received ACCEPTED from Node ${node.id} (${receivedAcceptances}/${majorityThreshold})`);
+                    if (hasMajority(receivedAcceptances)) {
+                      currentPhase = 3;
+                      addLogEntry(`Majority reached - proceeding to Learn phase`);
+                      startLearnPhase();
+                    }
+                  }
+                );
+              }
+            } : null
+          );
+        });
+      }
+      
+      isOldAcceptScenario = false;
+    }
+
+    function startLearnPhase() {
+      if (!isRunning) return;
+      
+      learnSent = true;
+      currentPhase = 4;
+      
+      addLogEntry(`Starting Learn phase with Proposer Node ${currentProposer.id}`, "event");
+      
+      nodes.forEach(node => {
+        if (node.isDown) return;
+        
+        sendMessage(
+          currentProposer,
+          node,
+          'LEARN',
+          '#1abc9c',
+          () => {
+            learnedNodes.add(node.id);
+            addLogEntry(`Node ${node.id} received LEARN and is now LEARNED`);
+          },
+          !node.isDown ? () => {
+            if (activeMessages.filter(m => !m.isFailed).every(msg => msg.progress >= 1)) {
+              addLogEntry("Paxos round completed successfully", "event");
+              setTimeout(() => {
+                if (isRunning) {
+                  currentRound++;
+                  promisedNodes.clear();
+                  acceptedNodes.clear();
+                  learnedNodes.clear();
+                  needsPreparePhase = false;
+                  
+                  if (shouldFailProposerAfterAccept && currentProposer.id === 1) {
+                    isOldAcceptScenario = true;
+                    failCurrentProposer();
+                  } else {
+                    startAcceptPhase();
+                  }
+                }
+              }, 1000);
+            }
+          } : null
+        );
+      });
+    }
+
+    function updateAnimation(timestamp) {
+      if (isPaused) return;
+
+      if (timestamp - lastTimestamp >= 16) {
+        lastTimestamp = timestamp;
+
+        activeMessages.forEach(msg => {
+          if (msg.progress < 1) {
+            msg.progress += msg.speed;
+            if (msg.progress >= 1.0 && !msg.receivedCalled && msg.onReceive) {
+              msg.receivedCalled = true;
+              msg.onReceive();
+            }
+            if (msg.progress >= 1) {
+              msg.progress = 1;
+              if (msg.onComplete) {
+                msg.onComplete();
+              }
+            }
+          }
+        });
+
+        drawScene();
+      }
+
+      animationId = requestAnimationFrame(updateAnimation);
+    }
+
+    function updateScenarioInfo() {
+      const downCount = nodes.filter(n => n.isDown).length;
+      let analysis = "";
+      
+      if (downCount === 0) {
+        analysis = "All nodes operational - System fully available";
+      } else if (downCount === 1) {
+        analysis = "1 Node with Issues - Tolerates failure (needs 3/5 for majority)";
+      } else if (downCount === 2) {
+        analysis = "2 Nodes with Issues - System may hang (needs 3/5 but only 3 available)";
+      } else if (downCount === 3) {
+        analysis = "3 Nodes with Issues - System unavailable (cannot reach majority)";
+      } else {
+        analysis = "4+ Nodes with Issues - System completely down";
+      }
+      
+      infoPanel.querySelector('p:last-child').innerHTML = `<strong>Current State:</strong> ${analysis}`;
+      addLogEntry(`System state changed: ${analysis}`, downCount >= 3 ? "error" : downCount > 0 ? "warning" : "event");
+    }
+
+    function setFailureScenario(count) {
+      nodes.forEach(node => {
+        node.isDown = false;
+        if (node.id === 1) node.role = 'Proposer';
+        else node.role = 'Acceptor';
+      });
+      
+      shouldFailProposerAfterAccept = false;
+      failProposerAfterAcceptBtn.classList.remove('active');
+      proposerFailedAfterAccept = false;
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      
+      const availableNodes = nodes.filter(n => n.id !== 2);
+      const shuffled = [...availableNodes].sort(() => 0.5 - Math.random());
+      for (let i = 0; i < count && i < shuffled.length; i++) {
+        shuffled[i].isDown = true;
+        if (shuffled[i].role === 'Proposer') {
+          const node2 = nodes.find(n => n.id === 2);
+          if (node2) {
+            node2.role = 'Proposer';
+            addLogEntry(`Node 2 promoted to Proposer due to issues with original proposer`, "warning");
+          }
+        }
+      }
+      
+      if (count > 0) {
+        const failedNodes = shuffled.slice(0, count).map(n => n.id).join(', ');
+        addLogEntry(`Simulating issues with ${count} node(s): ${failedNodes}`, "warning");
+      } else {
+        addLogEntry("All nodes recovered", "event");
+      }
+      
+      currentPhase = 0;
+      receivedPromises = 0;
+      receivedAcceptances = 0;
+      promisedNodes.clear();
+      acceptedNodes.clear();
+      learnedNodes.clear();
+      activeMessages = [];
+      sentMessages.clear();
+      learnSent = false;
+      currentRound = 0;
+      isProposerFailed = false;
+      needsPreparePhase = true;
+      isOldAcceptScenario = false;
+      
+      currentProposer = nodes.find(node => node.role === 'Proposer' && !node.isDown);
+      if (!currentProposer) {
+        electNewProposer();
+      }
+      
+      updateCurrentIssue();
+      drawScene();
+      updateScenarioInfo();
+    }
+
+    document.getElementById('startButton').addEventListener('click', () => {
+      if (!animationId) {
+        isRunning = true;
+        currentRound = 1;
+        isPaused = false;
+        needsPreparePhase = true;
+        lastTimestamp = performance.now();
+        isOldAcceptScenario = false;
+        proposerFailedAfterAccept = false;
+        addLogEntry("Starting Paxos algorithm from initial state", "event");
+        startPreparePhase();
+        animationId = requestAnimationFrame(updateAnimation);
+      } else {
+        if (isPaused) {
+          isPaused = false;
+          isRunning = true;
+          lastTimestamp = performance.now();
+          animationId = requestAnimationFrame(updateAnimation);
+          addLogEntry("Resuming paused simulation", "event");
+        }
+      }
+    });
+
+    document.getElementById('pauseButton').addEventListener('click', () => {
+      isPaused = true;
+      isRunning = false;
+      cancelAnimationFrame(animationId);
+      statusText.textContent = "Status: Paused";
+      addLogEntry("Simulation paused", "event");
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    });
+
+    document.getElementById('resetButton').addEventListener('click', () => {
+      isPaused = true;
+      isRunning = false;
+      cancelAnimationFrame(animationId);
+      currentPhase = 0;
+      receivedPromises = 0;
+      animationId = 0;
+      receivedAcceptances = 0;
+      promisedNodes.clear();
+      acceptedNodes.clear();
+      learnedNodes.clear();
+      activeMessages = [];
+      sentMessages.clear();
+      learnSent = false;
+      currentRound = 0;
+      shouldFailProposerAfterAccept = false;
+      isProposerFailed = false;
+      acceptedValue = null;
+      highestAcceptedValue = null;
+      needsPreparePhase = true;
+      isOldAcceptScenario = false;
+      proposerFailedAfterAccept = false;
+      nodes.forEach(node => {
+        node.isDown = false;
+        if (node.id === 1) node.role = 'Proposer';
+        else node.role = 'Acceptor';
+      });
+      currentProposer = nodes[0];
+      updateCurrentIssue();
+      drawScene();
+      statusText.textContent = "Status: Reset";
+      updateScenarioInfo();
+      addLogEntry("Simulation fully reset to initial state", "event");
+      
+      failProposerAfterAcceptBtn.classList.remove('active');
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    });
+
+    document.getElementById('fail1Node').addEventListener('click', () => setFailureScenario(1));
+    document.getElementById('fail2Nodes').addEventListener('click', () => setFailureScenario(2));
+    document.getElementById('fail3Nodes').addEventListener('click', () => setFailureScenario(3));
+    document.getElementById('recoverAll').addEventListener('click', () => setFailureScenario(0));
+
+    document.getElementById('failProposerAfterAccept').addEventListener('click', function() {
+      setFailureScenario(0);
+      shouldFailProposerAfterAccept = true;
+      this.classList.add('active');
+      addLogEntry("System configured to fail Node 1 after Node 2 accepts its value", "warning");
+      isOldAcceptScenario = true;
+    });
+
+    updateCurrentIssue();
+    drawScene();
+    updateScenarioInfo();
+  </script>
+</body>
+</html>
