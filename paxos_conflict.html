@@ -219,7 +219,7 @@
   <div class="info-panel" id="infoPanel">
     <h3>Optimized Paxos Rules:</h3>
     <p><strong>1.</strong> The Initial Prepare phase occurs only at startup or when a node issue arises.</p>
-    <p><strong>2.</strong> Node 2 sends OLD ACCEPT only after Prepare phase.</p>
+    <p><strong>2.</strong> Node 2 has the ACCEPT from the crashed Node 1, but in this animation, it won't reach the cluster because Node 4 wins the competition.</p>
     <p><strong>3.</strong> Other cases proceed directly to Accept phase</p>
     <p><strong>Current State:</strong> All nodes operational - System fully available</p>
   </div>
@@ -243,10 +243,10 @@
 
     const nodes = [
       { x: 150, y: 250, color: '#3498db', isDown: false, id: 1, role: 'Proposer' },
-      { x: 350, y: 100, color: '#2ecc71', isDown: false, id: 2, role: 'Acceptor' },
-      { x: 550, y: 100, color: '#e67e22', isDown: false, id: 3, role: 'Acceptor' },
+      { x: 350, y: 120, color: '#2ecc71', isDown: false, id: 2, role: 'Acceptor' },
+      { x: 550, y: 200, color: '#e67e22', isDown: false, id: 3, role: 'Acceptor' },
       { x: 400, y: 400, color: '#9b59b6', isDown: false, id: 4, role: 'Acceptor' },
-      { x: 600, y: 400, color: '#1abc9c', isDown: false, id: 5, role: 'Acceptor' }
+      { x: 600, y: 350, color: '#1abc9c', isDown: false, id: 5, role: 'Acceptor' }
     ];
 
     let animationId;
@@ -492,7 +492,7 @@
     }
 
     function electNewProposer() {
-      const newProposer = nodes.find(node => node.id === 2 && !node.isDown);
+      const newProposer = nodes.find(node => node.id === 4 && !node.isDown);
       
       if (newProposer) {
         nodes.forEach(node => {
@@ -509,6 +509,137 @@
       
       addLogEntry("No available node to become new Proposer", "error");
       return false;
+    }
+
+    // In the initialization section add:
+    const messageSpeeds = {
+      2: {3: 1.0, 5: 1.0, 4: 0.3}, // Node 2's messages (slow to Node 4)
+      4: {1: 1.0, 2: 1.0, 3: 1.0, 5: 1.0} // Node 4's messages
+    };
+
+    // Modified sendMessage function
+    function sendMessage(from, to, label, color, onReceive, onComplete) {
+      const messageKey = `${from.id}-${to.id}-${label}-${currentRound}`;
+      
+      if (sentMessages.has(messageKey)) return;
+      
+      sentMessages.add(messageKey);
+      
+      const baseDistance = calculateDistance(from.x, from.y, to.x, to.y);
+      let speedModifier = 1.0;
+      
+      // Apply special speed rules
+      if (from.id === 2 && messageSpeeds[2][to.id]) {
+        speedModifier = messageSpeeds[2][to.id];
+        messageSpeeds[2][to.id] = 1.0;
+      } else if (from.id === 4 && messageSpeeds[4][to.id]) {
+        speedModifier = messageSpeeds[4][to.id];
+      }
+      
+      const isFailed = to.isDown;
+      
+      addLogEntry(`${from.role} Node ${from.id} sending ${label} to Node ${to.id}${
+        speedModifier < 1.0 ? ' (slow)' : ''}${isFailed ? ' (target down)' : ''}`);
+      
+      const message = {
+        from: from,
+        to: to,
+        progress: 0,
+        color: color,
+        label: label,
+        isFailed: isFailed,
+        messageKey: messageKey,
+        speed: baseSpeed * speedMultiplier * speedModifier / (baseDistance / 100),
+        onReceive: onReceive,
+        onComplete: () => {
+          if (!isFailed && onComplete) onComplete();
+          activeMessages = activeMessages.filter(m => m !== message);
+        }
+      };
+      
+      activeMessages.push(message);
+      return message;
+    }
+
+    // Modified handleProposerCompetition
+    function handleProposerCompetition() {
+      const node2 = nodes[1];
+      const node4 = nodes[3];
+
+      // Node 2 sends PREPARE first (slow to Node 4)
+      addLogEntry(`Node ${node2.id} initiating PREPARE (slow to Node 4)`, "event");
+      sendPrepareMessages(node2, true);
+      receivedPromises = 0;
+      // Node 4 sends PREPARE immediately (before receiving Node 2's PREPARE)
+      setTimeout(() => {
+        if (!node4.isDown) {
+          addLogEntry(`Node ${node4.id} initiating PREPARE (before receiving Node 2's)`, "event");
+          sendPrepareMessages(node4, false);
+        }
+      }, 50); // Short delay to ensure Node 4 starts before receiving Node 2's message
+    }
+
+    // Modified sendPrepareMessages
+    function sendPrepareMessages(proposer, isNode2) {
+      if (proposer.isDown) return;
+      
+      receivedCompeteePromises = 1;
+      hasStartAccept = 0;
+      nodes.forEach(acceptor => {
+        if (acceptor.isDown || acceptor.id === proposer.id) return;
+        
+        // For Node 2, only Nodes 3 and 5 will respond
+        const willRespond = isNode2 ? [3].includes(acceptor.id) : true;
+        if (hasStartAccept) {
+          willRespond = 0;
+        }
+        if (!isNode2) {
+          promisedNodes.clear();
+        }
+        sendMessage(
+          proposer,
+          acceptor,
+          'PREPARE',
+          proposer.color,
+          () => {
+            if (willRespond) {
+              addLogEntry(`Node ${acceptor.id} processing PREPARE from Node ${proposer.id}`);
+              
+              // Only promise to higher-numbered proposers
+              if (!isNode2 || (isNode2 && acceptor.id !== 4)) {
+                sendMessage(
+                  acceptor,
+                  proposer,
+                  'PROMISE',
+                  acceptor.color,
+                  null,
+                  () => {
+                    addLogEntry(`Node ${proposer.id} promise from Node ${acceptor.id}`, "warning");
+                   
+                    if (isNode2) {
+                      addLogEntry(`Node ${proposer.id} received PROMISE from Node ${acceptor.id} (but won't proceed)`);
+                    } else {
+                      promisedNodes.add(acceptor.id);
+                      addLogEntry(`Node ${acceptor.id} received PREPARE and is now PROMISED`);
+                      addLogEntry(`Node ${proposer.id} received PROMISE from Node ${acceptor.id}`);
+                      receivedCompeteePromises++;
+                      if ((!hasStartAccept) && receivedCompeteePromises >= majorityThreshold) {
+                        // Node 4 wins - demote Node 2
+                        nodes[1].role = 'Acceptor';
+                        addLogEntry(`Node ${proposer.id} achieved majority -here becoming active Proposer`, "success");
+                        startAcceptPhase(proposer);
+                        hasStartAccept = 1;
+                      }
+                    }
+                  }
+                );
+              }
+            } else {
+              addLogEntry(`Node ${acceptor.id} ignoring PREPARE from Node ${proposer.id}`, "warning");
+            }
+          }
+        );
+      });
     }
 
     function failCurrentProposer() {
@@ -531,10 +662,14 @@
       
       if (electNewProposer()) {
         needsPreparePhase = true;
-        startTimeoutForNewProposer();
       } else {
         isRunning = false;
       }
+
+      // Start competition between Node 2 and Node 4
+      setTimeout(() => {
+        handleProposerCompetition();
+      }, 300);
       
       updateCurrentIssue();
       drawScene();
@@ -616,10 +751,13 @@
     }
 
     function startAcceptPhase() {
+      addLogEntry(`System accepts its value`, "warning");
+      
       if (!isRunning) return;
       
       currentPhase = 2;
       receivedAcceptances = 0;
+      hasLearned = 0;
       learnedNodes.clear();
       
       acceptedValue = isOldAcceptScenario ? `Recovered-Value-Round${currentRound}` : `Value-Round${currentRound}`;
@@ -646,7 +784,7 @@
               () => {
                 if (node.id === 2 || !proposerFailedAfterAccept) {
                   acceptedNodes.add(node.id);
-                  addLogEntry(`Node ${node.id} received ACCEPT and is now ACCEPTED`);
+                  addLogEntry(`Node ${node.id} received ACCEPT and is now ACCEPTED here`);
                 }
               },
               !node.isDown ? () => {
@@ -674,30 +812,27 @@
             acceptLabel,
             messageColor,
             () => {
-              if (node.id === 2 || !proposerFailedAfterAccept) {
-                acceptedNodes.add(node.id);
-                addLogEntry(`Node ${node.id} received ACCEPT and is now ACCEPTED`);
-              }
+              acceptedNodes.add(node.id);
+              addLogEntry(`Node ${node.id} received ACCEPT and is now ACCEPTED`);
             },
             !node.isDown ? () => {
-              if (!proposerFailedAfterAccept) {
-                sendMessage(
-                  node,
-                  currentProposer,
-                  'ACCEPTED',
-                  node.color,
-                  null,
-                  () => {
-                    receivedAcceptances++;
-                    addLogEntry(`Proposer received ACCEPTED from Node ${node.id} (${receivedAcceptances}/${majorityThreshold})`);
-                    if (hasMajority(receivedAcceptances)) {
-                      currentPhase = 3;
-                      addLogEntry(`Majority reached - proceeding to Learn phase`);
-                      startLearnPhase();
-                    }
+              sendMessage(
+                node,
+                currentProposer,
+                'ACCEPTED',
+                node.color,
+                null,
+                () => {
+                  receivedAcceptances++;
+                  addLogEntry(`Proposer received ACCEPTED from Node ${node.id} (${receivedAcceptances}/${majorityThreshold})`);
+                  if ((!hasLearned) && hasMajority(receivedAcceptances)) {
+                    currentPhase = 3;
+                    addLogEntry(`Majority reached - proceeding to Learn phase`);
+                    startLearnPhase();
+                    hasLearned = 1;
                   }
-                );
-              }
+                }
+              );
             } : null
           );
         });
