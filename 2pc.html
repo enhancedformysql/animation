@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2PC Visualization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 2px;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .control-group {
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    .log-panel {
+      width: 900px;
+      height: 150px;
+      overflow-y: auto;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 10px;
+      font-family: monospace;
+      border-radius: 5px;
+    }
+    .status {
+      margin: 10px 0;
+      font-weight: bold;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+    .state-machine {
+      width: 900px;
+      height: 100px;
+      background-color: #ecf0f1;
+      border-radius: 5px;
+      margin-top: 10px;
+      padding: 10px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: relative;
+    }
+    .state {
+      padding: 8px 15px;
+      border-radius: 20px;
+      background-color: #bdc3c7;
+      color: #2c3e50;
+      font-weight: bold;
+      position: relative;
+      z-index: 2;
+    }
+    .state.active {
+      background-color: #3498db;
+      color: white;
+    }
+    .state-connector {
+      position: absolute;
+      height: 4px;
+      background-color: #bdc3c7;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .state-connector.active {
+      background-color: #3498db;
+    }
+    .timer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(0,0,0,0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: monospace;
+    }
+    .speed-control {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .speed-control label {
+      margin-right: 10px;
+    }
+    .issue-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #34495e;
+      padding-bottom: 5px;
+    }
+    .log-time {
+      color: #3498db;
+    }
+    .log-event {
+      color: #2ecc71;
+    }
+    .log-warning {
+      color: #f39c12;
+    }
+    .log-error {
+      color: #e74c3c;
+    }
+    .queue-status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Two-Phase Commit Visualization</h1>
+  
+  <canvas id="protocolCanvas" width="900" height="500"></canvas>
+  
+  <div class="controls">
+    <div class="control-group">
+      <div>
+        <button id="startBtn">Start</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+      <div class="speed-control">
+        <label for="speedSlider">Speed:</label>
+        <input type="range" id="speedSlider" min="1" max="10" value="3">
+        <span id="speedValue">3x</span>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <div>
+        <button id="nextStepBtn" disabled>Next Step</button>
+        <button id="autoBtn">Auto Run</button>
+      </div>
+    </div>
+    
+    <div class="control-group issue-controls">
+      <div>
+        <button id="failRandomBtn">Fail Random Node</button>
+        <button id="failCoordinatorBtn">Fail Coordinator</button>
+      </div>
+      <div>
+        <button id="networkPartitionBtn">Create Network Partition</button>
+        <button id="dropMessageBtn">Drop Next Message</button>
+      </div>
+      <div>
+        <button id="recoverAllBtn">Recover All Nodes</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="status" id="statusText">Status: Ready</div>
+  
+  <div class="state-machine">
+    <div class="state" id="state-ready">Ready</div>
+    <div class="state-connector" style="width: 80px; left: 120px;"></div>
+    <div class="state" id="state-prepare">Prepare</div>
+    <div class="state-connector" style="width: 80px; left: 300px;"></div>
+    <div class="state" id="state-voting">Voting</div>
+    <div class="state-connector" style="width: 80px; left: 480px;"></div>
+    <div class="state" id="state-decide">Decide</div>
+    <div class="state-connector" style="width: 80px; left: 660px;"></div>
+    <div class="state" id="state-complete">Complete</div>
+  </div>
+  
+  <div class="log-panel" id="logPanel">
+    <div class="log-entry"><span class="log-time">[System]</span> <span class="log-event">2PC visualization initialized</span></div>
+  </div>
+
+  <script>
+    // Canvas and UI elements
+    const canvas = document.getElementById('protocolCanvas');
+    const ctx = canvas.getContext('2d');
+    const logPanel = document.getElementById('logPanel');
+    const statusText = document.getElementById('statusText');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const nextStepBtn = document.getElementById('nextStepBtn');
+    const autoBtn = document.getElementById('autoBtn');
+    
+    // State machine UI elements
+    const states = {
+      ready: document.getElementById('state-ready'),
+      prepare: document.getElementById('state-prepare'),
+      voting: document.getElementById('state-voting'),
+      decide: document.getElementById('state-decide'),
+      complete: document.getElementById('state-complete')
+    };
+    
+    const stateConnectors = document.querySelectorAll('.state-connector');
+    
+    // Node colors and configuration
+    const nodeColors = [
+      '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'
+    ];
+    
+    // Coordinator and participants setup
+    const coordinator = {
+      x: 150, y: 250, id: 'Coordinator', 
+      color: nodeColors[0], status: 'Ready',
+      isDown: false, role: 'Coordinator'
+    };
+    
+    const participants = [
+      { x: 250, y: 100, id: 'Participant1', color: nodeColors[1], status: 'Ready', isDown: false, role: 'Participant' },
+      { x: 400, y: 150, id: 'Participant2', color: nodeColors[2], status: 'Ready', isDown: false, role: 'Participant' },
+      { x: 500, y: 250, id: 'Participant3', color: nodeColors[3], status: 'Ready', isDown: false, role: 'Participant' },
+      { x: 400, y: 350, id: 'Participant4', color: nodeColors[4], status: 'Ready', isDown: false, role: 'Participant' },
+      { x: 250, y: 400, id: 'Participant5', color: nodeColors[5], status: 'Ready', isDown: false, role: 'Participant' }
+    ];
+
+    
+    const allNodes = [coordinator, ...participants];
+    
+    // Protocol state variables
+    let currentPhase = 0;
+    let votes = [];
+    let decision = null;
+    let isRunning = false;
+    let isPaused = false;
+    let isAuto = false;
+    let activeMessages = [];
+    let messageQueue = [];
+    let speedMultiplier = 3;
+    let timeoutTimer = null;
+    let timeoutDuration = 15000;
+    let timeoutStart = 0;
+    let dropNextMessage = false;
+    let networkPartition = false;
+    let partitionGroup1 = [coordinator, participants[0], participants[1]];
+    let partitionGroup2 = [participants[2], participants[3], participants[4]];
+    
+    // Update state machine visualization
+    function updateStateMachine(state) {
+      Object.values(states).forEach(s => s.classList.remove('active'));
+      stateConnectors.forEach(c => c.classList.remove('active'));
+      
+      if (state === 'ready') {
+        states.ready.classList.add('active');
+      } else if (state === 'prepare') {
+        states.prepare.classList.add('active');
+        states.ready.classList.add('active');
+        stateConnectors[0].classList.add('active');
+      } else if (state === 'voting') {
+        states.voting.classList.add('active');
+        states.prepare.classList.add('active');
+        states.ready.classList.add('active');
+        stateConnectors[0].classList.add('active');
+        stateConnectors[1].classList.add('active');
+      } else if (state === 'decide') {
+        states.decide.classList.add('active');
+        states.voting.classList.add('active');
+        states.prepare.classList.add('active');
+        states.ready.classList.add('active');
+        stateConnectors[0].classList.add('active');
+        stateConnectors[1].classList.add('active');
+        stateConnectors[2].classList.add('active');
+      } else if (state === 'complete') {
+        states.complete.classList.add('active');
+        states.decide.classList.add('active');
+        states.voting.classList.add('active');
+        states.prepare.classList.add('active');
+        states.ready.classList.add('active');
+        stateConnectors[0].classList.add('active');
+        stateConnectors[1].classList.add('active');
+        stateConnectors[2].classList.add('active');
+        stateConnectors[3].classList.add('active');
+      }
+    }
+    
+    // Draw a node on canvas
+    function drawNode(node) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = node.isDown ? '#95a5a6' : node.color;
+      ctx.fill();
+      ctx.strokeStyle = '#2c3e50';
+      ctx.stroke();
+      
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(node.id, node.x, node.y + 30);
+      
+      ctx.font = '10px Arial';
+      ctx.fillText(node.status, node.x, node.y - 25);
+      
+      if (node.isDown) {
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillText('DOWN', node.x, node.y + 50);
+      }
+    }
+    
+    // Draw a message/arrow between nodes
+    function drawMessage(from, to, progress, label, color) {
+      const x = from.x + (to.x - from.x) * progress;
+      const y = from.y + (to.y - from.y) * progress;
+      
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10 * Math.cos(angle - Math.PI/6), 
+                 y - 10 * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(x - 10 * Math.cos(angle + Math.PI/6), 
+                 y - 10 * Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      
+      ctx.fillStyle = color;
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x, y - 15);
+    }
+    
+    // Add log entry with timestamp and type
+    function addLog(message, type = 'event') {
+      const now = new Date();
+      const timeStr = now.toTimeString().substring(0, 8) + '.' + now.getMilliseconds().toString().padStart(3, '0');
+      
+      const logEntry = document.createElement('div');
+      logEntry.className = 'log-entry';
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.textContent = `[${timeStr}]`;
+      
+      const messageSpan = document.createElement('span');
+      messageSpan.className = `log-${type}`;
+      messageSpan.textContent = ` ${message}`;
+      
+      logEntry.appendChild(timeSpan);
+      logEntry.appendChild(messageSpan);
+      logPanel.appendChild(logEntry);
+      
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+    
+    // Process messages from queue to active
+    function processMessageQueue() {
+      if (messageQueue.length > 0) {
+        const count = messageQueue.length;
+        activeMessages.push(...messageQueue);
+        messageQueue = [];
+        addLog(`Processed ${count} messages from queue`, "event");
+        updateQueueStatus();
+      }
+    }
+    
+    // Update queue status display
+    function updateQueueStatus() {
+      let queueStatus = document.querySelector('.queue-status');
+      if (!queueStatus) {
+        queueStatus = document.createElement('div');
+        queueStatus.className = 'queue-status';
+        canvas.parentNode.appendChild(queueStatus);
+      }
+      queueStatus.textContent = `Queue: ${messageQueue.length} | Active: ${activeMessages.length}`;
+    }
+    
+    // Send message between nodes
+    function sendMessage(from, to, label, color, onReceive, onComplete) {
+      if (networkPartition) {
+        const inSamePartition = 
+          (partitionGroup1.includes(from) && partitionGroup1.includes(to)) ||
+          (partitionGroup2.includes(from) && partitionGroup2.includes(to));
+        if (!inSamePartition) {
+          addLog(`Message from ${from.id} to ${to.id} blocked by network partition`, "warning");
+          return null;
+        }
+      }
+      
+      if (dropNextMessage) {
+        addLog(`Dropping message from ${from.id} to ${to.id} (simulated message loss)`, "error");
+        dropNextMessage = false;
+        return null;
+      }
+      
+      if (to.isDown) {
+        addLog(`Message to ${to.id} failed (target is down)`, "warning");
+        return null;
+      }
+      
+      const message = {
+        from, to, label, color,
+        progress: 0,
+        speed: 0.002 * speedMultiplier,
+        onReceive, onComplete
+      };
+      
+      if (isAuto) {
+        activeMessages.push(message);
+      } else {
+        messageQueue.push(message);
+        addLog(`Queued ${label} from ${from.id} to ${to.id}`, "event");
+      }
+      
+      updateQueueStatus();
+      return message;
+    }
+    
+    // Start timeout for prepare phase
+    function startTimeout() {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      timeoutStart = Date.now();
+      
+      timeoutTimer = setTimeout(() => {
+        if (currentPhase === 1 && isRunning && !isPaused) {
+          addLog(`Timeout reached - aborting transaction`, "error");
+          decision = 'ABORT';
+          votes = [];
+          checkVotes();
+        }
+      }, timeoutDuration);
+    }
+    
+    // Update timeout display
+    function updateTimeoutDisplay() {
+      if (!timeoutTimer || currentPhase !== 1) {
+        clearTimeoutDisplay();
+        return;
+      }
+      
+      const elapsed = Date.now() - timeoutStart;
+      const remaining = Math.max(0, timeoutDuration - elapsed);
+      
+      const timerDiv = document.querySelector('.timer');
+      if (!timerDiv) {
+        const newTimer = document.createElement('div');
+        newTimer.className = 'timer';
+        canvas.parentNode.appendChild(newTimer);
+      }
+      
+      document.querySelector('.timer').textContent = `Timeout: ${(remaining/1000).toFixed(1)}s`;
+    }
+    
+    // Clear timeout display
+    function clearTimeoutDisplay() {
+      const timer = document.querySelector('.timer');
+      if (timer) timer.remove();
+    }
+    
+    // Prepare phase - coordinator sends PREPARE to all participants
+    function preparePhase() {
+      currentPhase = 1;
+      updateStateMachine('prepare');
+      statusText.textContent = 'Status: Prepare Phase';
+      addLog('Coordinator sending PREPARE to all participants');
+      
+      participants.forEach(participant => {
+        if (participant.isDown) return;
+        
+        participant.status = 'Preparing...';
+        sendMessage(
+          coordinator,
+          participant,
+          'PREPARE',
+          coordinator.color,
+          () => {
+            participant.status = 'Received PREPARE';
+            addLog(`${participant.id} received PREPARE`);
+          },
+          () => {
+            setTimeout(() => {
+              if (participant.isDown) return;
+              
+              if (Math.random() > 0.3) {
+                participant.status = 'Voted COMMIT';
+                sendMessage(
+                  participant,
+                  coordinator,
+                  'VOTE-COMMIT',
+                  participant.color,
+                  null,
+                  () => {
+                    votes.push('COMMIT');
+                    addLog(`${participant.id} voted COMMIT`);
+                    checkVotes();
+                  }
+                );
+              } else {
+                participant.status = 'Voted ABORT';
+                sendMessage(
+                  participant,
+                  coordinator,
+                  'VOTE-ABORT',
+                  '#e74c3c',
+                  null,
+                  () => {
+                    votes.push('ABORT');
+                    addLog(`${participant.id} voted ABORT`, "warning");
+                    checkVotes();
+                  }
+                );
+              }
+            }, 500 + Math.random() * 1000);
+          }
+        );
+      });
+      
+      startTimeout();
+    }
+    
+    // Check if all votes are received
+    function checkVotes() {
+      const activeParticipants = participants.filter(p => !p.isDown).length;
+      if (votes.length === activeParticipants) {
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        clearTimeoutDisplay();
+        
+        if (votes.every(v => v === 'COMMIT')) {
+          decision = 'COMMIT';
+          addLog('All participants voted COMMIT. Proceeding to commit phase.', "event");
+          commitPhase();
+        } else {
+          decision = 'ABORT';
+          addLog('At least one participant voted ABORT. Transaction will be aborted.', "warning");
+          commitPhase();
+        }
+      }
+    }
+    
+    // Commit phase - coordinator sends decision to all participants
+    function commitPhase() {
+      currentPhase = 2;
+      updateStateMachine('decide');
+      statusText.textContent = `Status: Commit Phase (Decision: ${decision})`;
+      
+      participants.forEach(participant => {
+        if (participant.isDown) return;
+        
+        const msgColor = decision === 'COMMIT' ? '#2ecc71' : '#e74c3c';
+        sendMessage(
+          coordinator,
+          participant,
+          decision,
+          msgColor,
+          () => {
+            participant.status = decision === 'COMMIT' ? 'Committed' : 'Aborted';
+          },
+          () => {
+            sendMessage(
+              participant,
+              coordinator,
+              'ACK',
+              participant.color,
+              null,
+              () => {
+                addLog(`${participant.id} acknowledged ${decision}`);
+                checkCompletion();
+              }
+            );
+          }
+        );
+      });
+    }
+    
+    // Check if all participants have acknowledged
+    function checkCompletion() {
+      const acks = participants.filter(p => 
+        !p.isDown && (p.status === 'Committed' || p.status === 'Aborted')
+      ).length;
+      
+      const activeParticipants = participants.filter(p => !p.isDown).length;
+      
+      if (acks === activeParticipants) {
+        currentPhase = 3;
+        updateStateMachine('complete');
+        statusText.textContent = `Status: Transaction ${decision === 'COMMIT' ? 'Committed' : 'Aborted'}`;
+        addLog(`Transaction ${decision === 'COMMIT' ? 'completed successfully' : 'was aborted'}`);
+        
+        if (isAuto) {
+          setTimeout(resetProtocol, 2000);
+        } else {
+          nextStepBtn.disabled = true;
+        }
+      }
+    }
+    
+    // Reset protocol to initial state
+    function resetProtocol() {
+      currentPhase = 0;
+      votes = [];
+      decision = null;
+      activeMessages = [];
+      messageQueue = [];
+      
+      participants.forEach(p => {
+        p.status = 'Ready';
+      });
+      coordinator.status = 'Ready';
+      
+      updateStateMachine('ready');
+      statusText.textContent = 'Status: Ready';
+      clearTimeoutDisplay();
+      updateQueueStatus();
+      
+      if (isAuto) {
+        setTimeout(startProtocol, 1000);
+      }
+    }
+    
+    // Start the protocol
+    function startProtocol() {
+      isRunning = true;
+      isPaused = false;
+      coordinator.status = 'Starting...';
+      addLog('Starting 2PC protocol');
+      
+      if (isAuto) {
+        preparePhase();
+      } else {
+        nextStepBtn.disabled = false;
+      }
+    }
+    
+    // Process next step in manual mode
+    function processNextStep() {
+      if (!isRunning || isAuto) return;
+      
+      processMessageQueue();
+      
+      if (currentPhase === 0) {
+        preparePhase();
+      } else if (currentPhase === 1 && votes.length === participants.filter(p => !p.isDown).length) {
+        commitPhase();
+      } else if (currentPhase === 2) {
+        checkCompletion();
+      }
+    }
+    
+    // Main animation loop
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      allNodes.forEach(drawNode);
+      
+      activeMessages.forEach((msg, index) => {
+        msg.progress += msg.speed;
+        drawMessage(msg.from, msg.to, msg.progress, msg.label, msg.color);
+        
+        if (msg.progress >= 1) {
+          if (msg.onComplete) msg.onComplete();
+          activeMessages.splice(index, 1);
+          updateQueueStatus();
+        }
+      });
+      
+      updateTimeoutDisplay();
+      requestAnimationFrame(animate);
+    }
+    
+    // Simulate random node failure
+    function failRandomNode() {
+      const availableNodes = allNodes.filter(n => !n.isDown && n.role !== 'Coordinator');
+      if (availableNodes.length > 0) {
+        const node = availableNodes[Math.floor(Math.random() * availableNodes.length)];
+        node.isDown = true;
+        node.status = 'DOWN';
+        addLog(`Simulated failure of ${node.id}`, "warning");
+      }
+    }
+    
+    // Simulate coordinator failure
+    function failCoordinator() {
+      if (!coordinator.isDown) {
+        coordinator.isDown = true;
+        coordinator.status = 'DOWN';
+        addLog(`Coordinator failed!`, "error");
+        
+        if (currentPhase === 1) {
+          addLog(`Participants will wait indefinitely for decision`, "warning");
+        }
+      }
+    }
+    
+    // Toggle network partition
+    function toggleNetworkPartition() {
+      networkPartition = !networkPartition;
+      if (networkPartition) {
+        addLog(`Network partition created! Group 1: ${partitionGroup1.map(n => n.id).join(', ')} | Group 2: ${partitionGroup2.map(n => n.id).join(', ')}`, "error");
+      } else {
+        addLog(`Network partition resolved`, "event");
+      }
+    }
+    
+    // Drop the next message
+    function dropNextMessageFunc() {
+      dropNextMessage = true;
+      addLog(`Next message will be dropped`, "warning");
+    }
+    
+    // Recover all nodes
+    function recoverAllNodes() {
+      allNodes.forEach(n => {
+        n.isDown = false;
+        n.status = 'Ready';
+      });
+      networkPartition = false;
+      dropNextMessage = false;
+      addLog(`All nodes recovered and network restored`, "event");
+    }
+    
+    // Event listeners
+    speedSlider.addEventListener('input', function() {
+      speedMultiplier = parseInt(this.value);
+      speedValue.textContent = speedMultiplier + 'x';
+    });
+    
+    document.getElementById('startBtn').addEventListener('click', startProtocol);
+    
+    document.getElementById('pauseBtn').addEventListener('click', function() {
+      isPaused = !isPaused;
+      if (isPaused) {
+        addLog('Protocol paused', "warning");
+      } else {
+        addLog('Protocol resumed', "event");
+      }
+    });
+    
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      isRunning = false;
+      isPaused = false;
+      isAuto = false;
+      resetProtocol();
+      addLog('Protocol reset', "event");
+    });
+    
+    document.getElementById('nextStepBtn').addEventListener('click', processNextStep);
+    
+    document.getElementById('autoBtn').addEventListener('click', function() {
+      isAuto = !isAuto;
+      if (isAuto) {
+        addLog('Switched to auto mode', "event");
+        startProtocol();
+      } else {
+        addLog('Switched to manual mode', "event");
+      }
+    });
+    
+    document.getElementById('failRandomBtn').addEventListener('click', failRandomNode);
+    document.getElementById('failCoordinatorBtn').addEventListener('click', failCoordinator);
+    document.getElementById('networkPartitionBtn').addEventListener('click', toggleNetworkPartition);
+    document.getElementById('dropMessageBtn').addEventListener('click', dropNextMessageFunc);
+    document.getElementById('recoverAllBtn').addEventListener('click', recoverAllNodes);
+    
+    // Initialize
+    animate();
+    updateQueueStatus();
+  </script>
+</body>
+</html>
