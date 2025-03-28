@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2PC Visualization</title>
+  <title>Two-Phase Commit Visualization</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -148,6 +148,12 @@
       border-radius: 5px;
       font-family: monospace;
     }
+    button.color-changing {
+      transition: background-color 0.3s ease;
+    }
+    button.color-changing.clicked {
+      background-color: #e74c3c;
+    }
   </style>
 </head>
 <body>
@@ -158,9 +164,9 @@
   <div class="controls">
     <div class="control-group">
       <div>
-        <button id="startBtn">Start</button>
-        <button id="pauseBtn">Pause</button>
-        <button id="resetBtn">Reset</button>
+        <button id="startBtn" class="color-changing">Start</button>
+        <button id="pauseBtn" class="color-changing">Pause</button>
+        <button id="resetBtn" class="color-changing">Reset</button>
       </div>
       <div class="speed-control">
         <label for="speedSlider">Speed:</label>
@@ -171,24 +177,11 @@
     
     <div class="control-group">
       <div>
-        <button id="nextStepBtn" disabled>Next Step</button>
-        <button id="autoBtn">Auto Run</button>
+        <button id="nextStepBtn" disabled class="color-changing">Next Step</button>
+        <button id="autoBtn" class="color-changing">Auto Run</button>
       </div>
     </div>
-    
-    <div class="control-group issue-controls">
-      <div>
-        <button id="failRandomBtn">Fail Random Node</button>
-        <button id="failCoordinatorBtn">Fail Coordinator</button>
-      </div>
-      <div>
-        <button id="networkPartitionBtn">Create Network Partition</button>
-        <button id="dropMessageBtn">Drop Next Message</button>
-      </div>
-      <div>
-        <button id="recoverAllBtn">Recover All Nodes</button>
-      </div>
-    </div>
+
   </div>
   
   <div class="status" id="statusText">Status: Ready</div>
@@ -210,7 +203,6 @@
   </div>
 
   <script>
-    // Canvas and UI elements
     const canvas = document.getElementById('protocolCanvas');
     const ctx = canvas.getContext('2d');
     const logPanel = document.getElementById('logPanel');
@@ -220,7 +212,6 @@
     const nextStepBtn = document.getElementById('nextStepBtn');
     const autoBtn = document.getElementById('autoBtn');
     
-    // State machine UI elements
     const states = {
       ready: document.getElementById('state-ready'),
       prepare: document.getElementById('state-prepare'),
@@ -231,12 +222,10 @@
     
     const stateConnectors = document.querySelectorAll('.state-connector');
     
-    // Node colors and configuration
     const nodeColors = [
       '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'
     ];
     
-    // Coordinator and participants setup
     const coordinator = {
       x: 150, y: 250, id: 'Coordinator', 
       color: nodeColors[0], status: 'Ready',
@@ -251,10 +240,8 @@
       { x: 250, y: 400, id: 'Participant5', color: nodeColors[5], status: 'Ready', isDown: false, role: 'Participant' }
     ];
 
-    
     const allNodes = [coordinator, ...participants];
     
-    // Protocol state variables
     let currentPhase = 0;
     let votes = [];
     let decision = null;
@@ -267,12 +254,7 @@
     let timeoutTimer = null;
     let timeoutDuration = 15000;
     let timeoutStart = 0;
-    let dropNextMessage = false;
-    let networkPartition = false;
-    let partitionGroup1 = [coordinator, participants[0], participants[1]];
-    let partitionGroup2 = [participants[2], participants[3], participants[4]];
     
-    // Update state machine visualization
     function updateStateMachine(state) {
       Object.values(states).forEach(s => s.classList.remove('active'));
       stateConnectors.forEach(c => c.classList.remove('active'));
@@ -310,7 +292,6 @@
       }
     }
     
-    // Draw a node on canvas
     function drawNode(node) {
       ctx.beginPath();
       ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
@@ -333,7 +314,6 @@
       }
     }
     
-    // Draw a message/arrow between nodes
     function drawMessage(from, to, progress, label, color) {
       const x = from.x + (to.x - from.x) * progress;
       const y = from.y + (to.y - from.y) * progress;
@@ -362,7 +342,6 @@
       ctx.fillText(label, x, y - 15);
     }
     
-    // Add log entry with timestamp and type
     function addLog(message, type = 'event') {
       const now = new Date();
       const timeStr = now.toTimeString().substring(0, 8) + '.' + now.getMilliseconds().toString().padStart(3, '0');
@@ -385,7 +364,6 @@
       logPanel.scrollTop = logPanel.scrollHeight;
     }
     
-    // Process messages from queue to active
     function processMessageQueue() {
       if (messageQueue.length > 0) {
         const count = messageQueue.length;
@@ -396,7 +374,6 @@
       }
     }
     
-    // Update queue status display
     function updateQueueStatus() {
       let queueStatus = document.querySelector('.queue-status');
       if (!queueStatus) {
@@ -407,23 +384,7 @@
       queueStatus.textContent = `Queue: ${messageQueue.length} | Active: ${activeMessages.length}`;
     }
     
-    // Send message between nodes
     function sendMessage(from, to, label, color, onReceive, onComplete) {
-      if (networkPartition) {
-        const inSamePartition = 
-          (partitionGroup1.includes(from) && partitionGroup1.includes(to)) ||
-          (partitionGroup2.includes(from) && partitionGroup2.includes(to));
-        if (!inSamePartition) {
-          addLog(`Message from ${from.id} to ${to.id} blocked by network partition`, "warning");
-          return null;
-        }
-      }
-      
-      if (dropNextMessage) {
-        addLog(`Dropping message from ${from.id} to ${to.id} (simulated message loss)`, "error");
-        dropNextMessage = false;
-        return null;
-      }
       
       if (to.isDown) {
         addLog(`Message to ${to.id} failed (target is down)`, "warning");
@@ -448,7 +409,6 @@
       return message;
     }
     
-    // Start timeout for prepare phase
     function startTimeout() {
       if (timeoutTimer) clearTimeout(timeoutTimer);
       timeoutStart = Date.now();
@@ -463,7 +423,6 @@
       }, timeoutDuration);
     }
     
-    // Update timeout display
     function updateTimeoutDisplay() {
       if (!timeoutTimer || currentPhase !== 1) {
         clearTimeoutDisplay();
@@ -483,13 +442,11 @@
       document.querySelector('.timer').textContent = `Timeout: ${(remaining/1000).toFixed(1)}s`;
     }
     
-    // Clear timeout display
     function clearTimeoutDisplay() {
       const timer = document.querySelector('.timer');
       if (timer) timer.remove();
     }
     
-    // Prepare phase - coordinator sends PREPARE to all participants
     function preparePhase() {
       currentPhase = 1;
       updateStateMachine('prepare');
@@ -513,7 +470,7 @@
             setTimeout(() => {
               if (participant.isDown) return;
               
-              if (Math.random() > 0.3) {
+              if (Math.random() > 0.1) {
                 participant.status = 'Voted COMMIT';
                 sendMessage(
                   participant,
@@ -550,7 +507,6 @@
       startTimeout();
     }
     
-    // Check if all votes are received
     function checkVotes() {
       const activeParticipants = participants.filter(p => !p.isDown).length;
       if (votes.length === activeParticipants) {
@@ -569,7 +525,6 @@
       }
     }
     
-    // Commit phase - coordinator sends decision to all participants
     function commitPhase() {
       currentPhase = 2;
       updateStateMachine('decide');
@@ -604,7 +559,6 @@
       });
     }
     
-    // Check if all participants have acknowledged
     function checkCompletion() {
       const acks = participants.filter(p => 
         !p.isDown && (p.status === 'Committed' || p.status === 'Aborted')
@@ -626,7 +580,6 @@
       }
     }
     
-    // Reset protocol to initial state
     function resetProtocol() {
       currentPhase = 0;
       votes = [];
@@ -649,7 +602,6 @@
       }
     }
     
-    // Start the protocol
     function startProtocol() {
       isRunning = true;
       isPaused = false;
@@ -663,7 +615,6 @@
       }
     }
     
-    // Process next step in manual mode
     function processNextStep() {
       if (!isRunning || isAuto) return;
       
@@ -678,7 +629,6 @@
       }
     }
     
-    // Main animation loop
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
@@ -699,64 +649,21 @@
       requestAnimationFrame(animate);
     }
     
-    // Simulate random node failure
-    function failRandomNode() {
-      const availableNodes = allNodes.filter(n => !n.isDown && n.role !== 'Coordinator');
-      if (availableNodes.length > 0) {
-        const node = availableNodes[Math.floor(Math.random() * availableNodes.length)];
-        node.isDown = true;
-        node.status = 'DOWN';
-        addLog(`Simulated failure of ${node.id}`, "warning");
-      }
+    function handleButtonClick(event) {
+      const button = event.currentTarget;
+      button.classList.add('clicked');
+      setTimeout(() => {
+        button.classList.remove('clicked');
+      }, 300);
     }
     
-    // Simulate coordinator failure
-    function failCoordinator() {
-      if (!coordinator.isDown) {
-        coordinator.isDown = true;
-        coordinator.status = 'DOWN';
-        addLog(`Coordinator failed!`, "error");
-        
-        if (currentPhase === 1) {
-          addLog(`Participants will wait indefinitely for decision`, "warning");
-        }
-      }
-    }
-    
-    // Toggle network partition
-    function toggleNetworkPartition() {
-      networkPartition = !networkPartition;
-      if (networkPartition) {
-        addLog(`Network partition created! Group 1: ${partitionGroup1.map(n => n.id).join(', ')} | Group 2: ${partitionGroup2.map(n => n.id).join(', ')}`, "error");
-      } else {
-        addLog(`Network partition resolved`, "event");
-      }
-    }
-    
-    // Drop the next message
-    function dropNextMessageFunc() {
-      dropNextMessage = true;
-      addLog(`Next message will be dropped`, "warning");
-    }
-    
-    // Recover all nodes
-    function recoverAllNodes() {
-      allNodes.forEach(n => {
-        n.isDown = false;
-        n.status = 'Ready';
-      });
-      networkPartition = false;
-      dropNextMessage = false;
-      addLog(`All nodes recovered and network restored`, "event");
-    }
-    
-    // Event listeners
     speedSlider.addEventListener('input', function() {
       speedMultiplier = parseInt(this.value);
       speedValue.textContent = speedMultiplier + 'x';
     });
     
     document.getElementById('startBtn').addEventListener('click', startProtocol);
+    document.getElementById('startBtn').addEventListener('click', handleButtonClick);
     
     document.getElementById('pauseBtn').addEventListener('click', function() {
       isPaused = !isPaused;
@@ -766,6 +673,7 @@
         addLog('Protocol resumed', "event");
       }
     });
+    document.getElementById('pauseBtn').addEventListener('click', handleButtonClick);
     
     document.getElementById('resetBtn').addEventListener('click', function() {
       isRunning = false;
@@ -774,8 +682,10 @@
       resetProtocol();
       addLog('Protocol reset', "event");
     });
+    document.getElementById('resetBtn').addEventListener('click', handleButtonClick);
     
     document.getElementById('nextStepBtn').addEventListener('click', processNextStep);
+    document.getElementById('nextStepBtn').addEventListener('click', handleButtonClick);
     
     document.getElementById('autoBtn').addEventListener('click', function() {
       isAuto = !isAuto;
@@ -786,14 +696,10 @@
         addLog('Switched to manual mode', "event");
       }
     });
+    document.getElementById('autoBtn').addEventListener('click', handleButtonClick);
     
-    document.getElementById('failRandomBtn').addEventListener('click', failRandomNode);
-    document.getElementById('failCoordinatorBtn').addEventListener('click', failCoordinator);
-    document.getElementById('networkPartitionBtn').addEventListener('click', toggleNetworkPartition);
-    document.getElementById('dropMessageBtn').addEventListener('click', dropNextMessageFunc);
-    document.getElementById('recoverAllBtn').addEventListener('click', recoverAllNodes);
+
     
-    // Initialize
     animate();
     updateQueueStatus();
   </script>
