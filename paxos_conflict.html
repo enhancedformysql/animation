@@ -243,9 +243,9 @@
 
     const nodes = [
       { x: 150, y: 250, color: '#3498db', isDown: false, id: 1, role: 'Proposer' },
-      { x: 350, y: 120, color: '#2ecc71', isDown: false, id: 2, role: 'Acceptor' },
+      { x: 350, y: 120, color: '#9b59b6', isDown: false, id: 2, role: 'Acceptor' },
       { x: 550, y: 200, color: '#e67e22', isDown: false, id: 3, role: 'Acceptor' },
-      { x: 400, y: 400, color: '#9b59b6', isDown: false, id: 4, role: 'Acceptor' },
+      { x: 400, y: 400, color: '#2ecc71', isDown: false, id: 4, role: 'Acceptor' },
       { x: 600, y: 350, color: '#1abc9c', isDown: false, id: 5, role: 'Acceptor' }
     ];
 
@@ -495,15 +495,8 @@
       const newProposer = nodes.find(node => node.id === 4 && !node.isDown);
       
       if (newProposer) {
-        nodes.forEach(node => {
-          if (node.role === 'Proposer' && node.id !== newProposer.id) {
-            node.role = 'Acceptor';
-          }
-        });
-        
-        newProposer.role = 'Proposer';
         currentProposer = newProposer;
-        addLogEntry(`Node ${newProposer.id} elected as new Proposer`, "event");
+        addLogEntry(`Node ${newProposer.id} will be elected as new Proposer later`, "event");
         return true;
       }
       
@@ -568,6 +561,10 @@
 
       // Node 2 sends PREPARE first (slow to Node 4)
       addLogEntry(`Node ${node2.id} initiating PREPARE (slow to Node 4)`, "event");
+
+      acceptedNodes.clear();
+      drawScene();
+
       sendPrepareMessages(node2, true);
       receivedPromises = 0;
       // Node 4 sends PREPARE immediately (before receiving Node 2's PREPARE)
@@ -607,6 +604,7 @@
               
               // Only promise to higher-numbered proposers
               if (!isNode2 || (isNode2 && acceptor.id !== 4)) {
+              	promisedNodes.add(acceptor.id);
                 sendMessage(
                   acceptor,
                   proposer,
@@ -619,7 +617,6 @@
                     if (isNode2) {
                       addLogEntry(`Node ${proposer.id} received PROMISE from Node ${acceptor.id} (but won't proceed)`);
                     } else {
-                      promisedNodes.add(acceptor.id);
                       addLogEntry(`Node ${acceptor.id} received PREPARE and is now PROMISED`);
                       addLogEntry(`Node ${proposer.id} received PROMISE from Node ${acceptor.id}`);
                       receivedCompeteePromises++;

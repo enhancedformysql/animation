@@ -243,15 +243,15 @@
 
     const nodes = [
       { x: 150, y: 250, color: '#3498db', isDown: false, id: 1, role: 'Proposer' },
-      { x: 350, y: 120, color: '#2ecc71', isDown: false, id: 2, role: 'Acceptor' },
+      { x: 350, y: 120, color: '#9b59b6', isDown: false, id: 2, role: 'Acceptor' },
       { x: 550, y: 200, color: '#e67e22', isDown: false, id: 3, role: 'Acceptor' },
-      { x: 400, y: 400, color: '#9b59b6', isDown: false, id: 4, role: 'Acceptor' },
+      { x: 400, y: 400, color: '#2ecc71', isDown: false, id: 4, role: 'Acceptor' },
       { x: 600, y: 350, color: '#1abc9c', isDown: false, id: 5, role: 'Acceptor' }
     ];
 
     const mysqlNode = {
-      x: 80,
-      y: 220,
+      x: 65,
+      y: 230,
       width: 40,
       height: 60,
       color: '#4479a1',
@@ -527,15 +527,8 @@
       const newProposer = nodes.find(node => node.id === 4 && !node.isDown);
       
       if (newProposer) {
-        nodes.forEach(node => {
-          if (node.role === 'Proposer' && node.id !== newProposer.id) {
-            node.role = 'Acceptor';
-          }
-        });
-        
-        newProposer.role = 'Proposer';
         currentProposer = newProposer;
-        addLogEntry(`Node ${newProposer.id} elected as new Proposer`, "event");
+        addLogEntry(`Node ${newProposer.id} will be elected as new Proposer later`, "event");
         return true;
       }
       
@@ -553,6 +546,10 @@
       const node4 = nodes[3];
 
       addLogEntry(`Node ${node2.id} initiating PREPARE (slow to Node 4)`, "event");
+
+      acceptedNodes.clear();
+      drawScene();
+      
       sendPrepareMessages(node2, true);
       receivedPromises = 0;
       setTimeout(() => {
@@ -588,6 +585,7 @@
               addLogEntry(`Node ${acceptor.id} processing PREPARE from Node ${proposer.id}`);
               
               if (!isNode2 || (isNode2 && acceptor.id !== 4)) {
+              	promisedNodes.add(acceptor.id);
                 sendMessage(
                   acceptor,
                   proposer,
@@ -600,7 +598,6 @@
                     if (isNode2) {
                       addLogEntry(`Node ${proposer.id} received PROMISE from Node ${acceptor.id} (but won't proceed)`);
                     } else {
-                      promisedNodes.add(acceptor.id);
                       addLogEntry(`Node ${acceptor.id} received PREPARE and is now PROMISED`);
                       addLogEntry(`Node ${proposer.id} received PROMISE from Node ${acceptor.id}`);
                       receivedCompeteePromises++;
@@ -733,8 +730,12 @@
       addLogEntry(`System accepts its value`, "warning");
       
       if (!isRunning) return;
+
+      if (nodes[0].isDown) {
+      } else {
+      	mysqlNode.status = "Proposing...";
+      }
       
-      mysqlNode.status = "Proposing...";
       currentPhase = 2;
       receivedAcceptances = 0;
       hasLearned = 0;
@@ -827,7 +828,12 @@
       learnSent = true;
       currentPhase = 4;
       
-      mysqlNode.status = `Transaction Committed`;
+      if (nodes[0].isDown) {
+        mysqlNode.status = `Transaction Aborted`;
+      } else {
+      	mysqlNode.status = `Transaction Committed`;
+      }
+      
       mysqlNode.statusColor = '#4caf50';
       addLogEntry(`MySQL notified to commit value: ${acceptedValue}`, "success");
       
