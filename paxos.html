@@ -70,7 +70,7 @@
       padding: 15px;
       border-radius: 5px;
       margin-top: 20px;
-      max-width: 600px;
+      max-width: 1200px;
     }
     .majority-tracker {
       margin-top: 10px;
@@ -218,9 +218,9 @@
   
   <div class="info-panel" id="infoPanel">
     <h3>Optimized Paxos Rules:</h3>
-    <p><strong>1.</strong> The Initial Prepare phase occurs only at startup or when a node issue arises.</p>
-    <p><strong>2.</strong> Node 2 sends OLD ACCEPT only after Prepare phase.</p>
-    <p><strong>3.</strong> Other cases proceed directly to Accept phase</p>
+    <p><strong>1.</strong> The Initial Prepare phase occurs only at startup or when a node issue arises or when a proposed value times out in transmission.</p>
+    <p><strong>2.</strong> Under 'Fail Proposer After Accept,' Node 2 has the ACCEPT from the crashed Node 1 and will propagate it as it's the only one in the prepare phase.</p>
+    <p><strong>3.</strong> In normal interaction, the prepare phase is not needed, and nodes can directly start from the Accept phase to propose information.</p>
     <p><strong>Current State:</strong> All nodes operational - System fully available</p>
   </div>
 
