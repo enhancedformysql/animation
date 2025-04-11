@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Emergence</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0d0d0d;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="knowledgeCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById("knowledgeCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    class Knowledge {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 4;
+        this.connections = [];
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#00ffcc";
+        ctx.fill();
+      }
+
+      connect(other) {
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(other.x, other.y);
+        ctx.strokeStyle = "rgba(0,255,200,0.2)";
+        ctx.stroke();
+      }
+    }
+
+    let knowledgePoints = [];
+    let frame = 0;
+
+    function animate() {
+      ctx.fillStyle = "rgba(13,13,13,0.2)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (frame % 10 === 0) {
+        const newX = Math.random() * canvas.width;
+        const newY = Math.random() * canvas.height;
+        const point = new Knowledge(newX, newY);
+
+        // Increase density over time
+        if (frame > 200) {
+          for (let i = 0; i < knowledgePoints.length; i++) {
+            const dx = point.x - knowledgePoints[i].x;
+            const dy = point.y - knowledgePoints[i].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150) {
+              point.connections.push(knowledgePoints[i]);
+            }
+          }
+        } else if (frame > 50) {
+          const rand = Math.floor(Math.random() * knowledgePoints.length);
+          if (knowledgePoints[rand]) {
+            point.connections.push(knowledgePoints[rand]);
+          }
+        }
+
+        knowledgePoints.push(point);
+      }
+
+      for (let p of knowledgePoints) {
+        p.draw();
+        for (let c of p.connections) {
+          p.connect(c);
+        }
+      }
+
+      frame++;
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
