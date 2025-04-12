@@ -16,6 +16,10 @@ Computer teaching-related animations.
 
 [TCP State Machine](tcp_state_machine.html)
 
+[MySQL Paxos](paxos_app.html)
+
+[Multi-Leader Paxos Conflict Resolution ](paxos_conflict.html)
+
 # Book Link:
 
 [The Art of Problem-Solving in Software Engineering:How to Make MySQL Better](https://github.com/enhancedformysql/The-Art-of-Problem-Solving-in-Software-Engineering_How-to-Make-MySQL-Better).
