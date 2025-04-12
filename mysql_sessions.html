@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Sessions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --session-a: #6C9BCF;  /* Soft blue */
+      --session-b: #7DC3A1;  /* Mint green */
+      --session-c: #B38CD9;  /* Lavender */
+      --text-dark: #2D3748;
+      --text-light: #718096;
+      --bg-light: #F7FAFC;
+      --border-radius: 8px;
+      --card-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      --divider-color: rgba(0,0,0,0.1);
+      --step-spacing: 1rem;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+    
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    
+    .session-column {
+      font-family: 'Segoe Print', cursive;
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+    
+    .session-header {
+      font-family: 'Segoe Print', cursive;
+      padding: 1.25rem;
+      text-align: center;
+      font-weight: 500;
+      color: white;
+      font-size: 1.2rem;
+      border-bottom: 1px solid var(--divider-color);
+    }
+    
+    .session-a .session-header { background: var(--session-a); }
+    .session-b .session-header { background: var(--session-b); }
+    .session-c .session-header { background: var(--session-c); }
+    
+    .sql-steps {
+      font-family: 'Segoe Print', cursive;
+      padding: 1.25rem;
+    }
+    
+    .sql-step {
+      font-family: 'Segoe Print', cursive;
+      padding: 1rem;
+      margin-bottom: var(--step-spacing);
+      background: white;
+      border-radius: 4px;
+      border-left: 3px solid;
+      position: relative;
+      min-height: 1.5rem;
+    }
+    
+    /* Divider after EVERY step including last one */
+    .sql-step::after {
+      content: "";
+      display: block;
+      height: 1px;
+      background: var(--divider-color);
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(-0.5 * var(--step-spacing));
+    }
+    
+    /* Remove divider from the very last step */
+    .sql-step:last-child::after {
+      display: none;
+    }
+    
+    .session-a .sql-step { border-left-color: var(--session-a); }
+    .session-b .sql-step { border-left-color: var(--session-b); }
+    .session-c .sql-step { border-left-color: var(--session-c); }
+    
+    .sql-command {
+      font-family: 'Segoe Print', cursive; /* Changed from monospace to cursive */
+      font-size: 0.8rem;
+      color: var(--text-dark);
+      word-break: break-word;
+      line-height: 1.5;
+      min-height: 1.2rem;
+    }
+    
+    .session-column:not(:last-child) {
+      border-right: 1px solid var(--divider-color);
+    }
+    
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .session-column:not(:last-child) {
+        border-right: none;
+        border-bottom: 1px solid var(--divider-color);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SQL Sessions</h1>
+    
+    <div class="comparison-grid">
+      <!-- Session A -->
+      <div class="session-column session-a">
+        <div class="session-header">Session A</div>
+        <div class="sql-steps">
+          <div class="sql-step">
+            <div class="sql-command">start transaction with consistent snapshot;</div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command">select k from t where id=1;</div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Session B -->
+      <div class="session-column session-b">
+        <div class="session-header">Session B</div>
+        <div class="sql-steps">
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command">start transaction with consistent snapshot;</div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command">update t set k=k+1 where id=1;</div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command">select k from t where id=1;</div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>          
+        </div>
+      </div>
+      
+      <!-- Session C -->
+      <div class="session-column session-c">
+        <div class="session-header">Session C</div>
+        <div class="sql-steps">
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command">update t set k=k+1 where id=1;</div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+          <div class="sql-step">
+            <div class="sql-command"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
