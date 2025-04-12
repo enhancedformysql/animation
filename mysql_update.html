@@ -38,7 +38,7 @@
       justify-content: center;
       align-items: center;
       position: relative;
-      margin-bottom: 40px;
+      margin-bottom: 50px;
     }
 
     .node {
@@ -92,7 +92,28 @@
       position: absolute;
       left: calc(50% + 240px);
       top: 50;
-      
+    }
+    
+    /* New styles for Yes/No labels */
+    .decision-label {
+      position: absolute;
+      font-family: 'Segoe Print', cursive;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #2e7d32;
+      z-index: 3;
+    }
+    
+    .decision-label.yes {
+      bottom: -35px;
+      left: 40%;
+      transform: translateX(-50%);
+    }
+    
+    .decision-label.no {
+      top: 40%;
+      right: -50px;
+      transform: translateY(-50%);
     }
 
     svg {
@@ -117,6 +138,9 @@
     <div class="flow-step" id="step2">
       <div class="decision" id="inMemory">
         <div class="decision-content">Is data in memory?</div>
+        <!-- Added Yes/No labels -->
+        <div class="decision-label yes">Yes</div>
+        <div class="decision-label no">No</div>
       </div>
       <div class="branch right" id="loadDisk">Load from disk</div>
     </div>
@@ -141,7 +165,6 @@
       <div class="node" id="writeRedo">Write to redolog (prepare)</div>
     </div>
 
-    <!-- New step added here -->
     <div class="flow-step" id="step7a">
       <div class="node" id="writeBinlog">Write to binlog</div>
     </div>
@@ -377,7 +400,7 @@
       drawBox("writeRow", { fill: '#bbdefb', stroke: '#1565c0' });
       drawBox("updateMem");
       drawBox("writeRedo");
-      drawBox("writeBinlog", { fill: '#bbdefb', stroke: '#1565c0' }); // New box
+      drawBox("writeBinlog", { fill: '#bbdefb', stroke: '#1565c0' });
       drawBox("commit");
       drawBox("loadDisk");
 
@@ -385,16 +408,16 @@
       drawDiamond("inMemory");
 
       // Draw arrows with proper directions
-      drawArrow("fetch", "inMemory"); // Down
-      drawArrow("inMemory", "returnRow"); // Down
-      drawArrow("inMemory", "loadDisk", { fromLeftSide: true }); // left to Right 
-      drawArrow("loadDisk", "returnRow", { fromRightToLeftDownTurn: true }); // L-shape
-      drawArrow("returnRow", "increment"); // Down
-      drawArrow("increment", "writeRow"); // Down
-      drawArrow("writeRow", "updateMem"); // Down
-      drawArrow("updateMem", "writeRedo"); // Down
-      drawArrow("writeRedo", "writeBinlog"); // New arrow
-      drawArrow("writeBinlog", "commit"); // New arrow
+      drawArrow("fetch", "inMemory");
+      drawArrow("inMemory", "returnRow");
+      drawArrow("inMemory", "loadDisk", { fromLeftSide: true });
+      drawArrow("loadDisk", "returnRow", { fromRightToLeftDownTurn: true });
+      drawArrow("returnRow", "increment");
+      drawArrow("increment", "writeRow");
+      drawArrow("writeRow", "updateMem");
+      drawArrow("updateMem", "writeRedo");
+      drawArrow("writeRedo", "writeBinlog");
+      drawArrow("writeBinlog", "commit");
       
       console.groupEnd();
     }
