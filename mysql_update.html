@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MySQL Update Flowchart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-size: 24px;
+      padding: 20px;
+      background: #fefefe;
+      -webkit-text-stroke: 0.3px;
+      text-shadow: 0 0 0.5px currentColor;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #2f4f4f;
+      margin-bottom: 2rem;
+      -webkit-text-stroke: 0.4px;
+      text-shadow: 0 0 0.7px currentColor;
+    }
+
+    .flowchart {
+      width: 100%;
+      max-width: 1000px;
+      background-color: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 40px 20px;
+      position: relative;
+    }
+
+    .flow-step {
+    	font-family: 'Segoe Print', cursive;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    .node {
+      padding: 1rem 1.5rem;
+      background-color: transparent;
+      border: none;
+      text-align: center;
+      width: 220px;
+      font-size: 1.1rem;
+      position: relative;
+      z-index: 2;
+      -webkit-text-stroke: 0.35px;
+      text-shadow: 0 0 0.6px currentColor;
+    }
+
+    .decision {
+      width: 160px;
+      height: 160px;
+      background-color: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .decision-content {
+      width: 200px;
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.2rem;
+      -webkit-text-stroke: 0.35px;
+      text-shadow: 0 0 0.6px currentColor;
+    }
+
+    .branch {
+      padding: 1rem;
+      background-color: transparent;
+      border: none;
+      text-align: center;
+      font-size: 1.2rem;
+      width: 200px;
+      position: relative;
+      z-index: 2;
+      -webkit-text-stroke: 0.35px;
+      text-shadow: 0 0 0.6px currentColor;
+    }
+
+    .branch.right {
+      position: absolute;
+      left: calc(50% + 240px);
+      top: 50;
+      
+    }
+
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+  </style>
+</head>
+<body>
+  <h1>update T set c=c+1 where ID=1</h1>
+  <div class="flowchart" id="flowchart">
+
+    <div class="flow-step" id="step1">
+      <div class="node" id="fetch">Fetch row where ID = 1</div>
+    </div>
+
+    <div class="flow-step" id="step2">
+      <div class="decision" id="inMemory">
+        <div class="decision-content">Is data in memory?</div>
+      </div>
+      <div class="branch right" id="loadDisk">Load from disk</div>
+    </div>
+
+    <div class="flow-step" id="step3">
+      <div class="branch" id="returnRow">Return row data</div>
+    </div>
+
+    <div class="flow-step" id="step4">
+      <div class="node" id="increment">Increment value of column C</div>
+    </div>
+
+    <div class="flow-step" id="step5">
+      <div class="node" id="writeRow">Write new row</div>
+    </div>
+
+    <div class="flow-step" id="step6">
+      <div class="node" id="updateMem">Update row in memory</div>
+    </div>
+
+    <div class="flow-step" id="step7">
+      <div class="node" id="writeRedo">Write to redolog (prepare)</div>
+    </div>
+
+    <!-- New step added here -->
+    <div class="flow-step" id="step7a">
+      <div class="node" id="writeBinlog">Write to binlog</div>
+    </div>
+
+    <div class="flow-step" id="step8">
+      <div class="node" id="commit">Commit transaction</div>
+    </div>
+
+    <svg id="arrows"></svg>
+  </div>
+
+  <script type="module">
+    import rough from 'https://cdn.jsdelivr.net/npm/roughjs@4.5.1/bundled/rough.esm.js';
+
+    const rc = rough.svg(document.getElementById('arrows'));
+
+    function drawBox(elementId, options = {}) {
+      console.log(`Drawing box for ${elementId}`);
+      const el = document.getElementById(elementId);
+      const svg = document.getElementById("arrows");
+      const rect = el.getBoundingClientRect();
+      const container = svg.parentElement.getBoundingClientRect();
+
+      const x = rect.left - container.left;
+      const y = rect.top - container.top;
+      const width = rect.width;
+      const height = rect.height;
+
+      console.log(`Box coordinates: x=${x}, y=${y}, width=${width}, height=${height}`);
+
+      const box = rc.rectangle(x, y, width, height, {
+        stroke: options.stroke || '#2e7d32',
+        strokeWidth: 5,
+        fill: options.fill || '#e8f5e9',
+        fillStyle: 'solid',
+        roughness: 1.5,
+        hachureAngle: 60,
+        hachureGap: 8,
+        bowing: 0.3
+      });
+
+      svg.appendChild(box);
+    }
+
+    function drawDiamond(elementId) {
+      console.log(`Drawing diamond for ${elementId}`);
+      const el = document.getElementById(elementId);
+      const svg = document.getElementById("arrows");
+      const rect = el.getBoundingClientRect();
+      const container = svg.parentElement.getBoundingClientRect();
+
+      const centerX = rect.left - container.left + rect.width/2;
+      const centerY = rect.top - container.top + rect.height/2;
+      const size = Math.max(rect.width, rect.height) * 1.1;
+
+      console.log(`Diamond center: (${centerX},${centerY}), size: ${size}`);
+
+      const diamond = rc.polygon([
+        [centerX, centerY - size/2],  // Top
+        [centerX + size/2, centerY],  // Right
+        [centerX, centerY + size/2],  // Bottom
+        [centerX - size/2, centerY]   // Left
+      ], {
+        stroke: '#2e7d32',
+        strokeWidth: 5,
+        fill: '#c8e6c9',
+        fillStyle: 'solid',
+        roughness: 1.5,
+        bowing: 0.3
+      });
+
+      svg.appendChild(diamond);
+    }
+
+    function drawArrowhead(x, y, direction = 'south') {
+      const svg = document.getElementById("arrows");
+      const size = 10;
+      
+      let points;
+      
+      console.groupCollapsed(`Drawing arrowhead at (${x}, ${y}) pointing ${direction}`);
+      
+      switch(direction) {
+        case 'north': // Points up (¡ý)
+          points = [
+            [x, y],
+            [x - size, y + size],
+            [x + size, y + size]
+          ];
+          break;
+          
+        case 'south': // Points down (¡ü)
+          points = [
+            [x, y],
+            [x - size, y - size],
+            [x + size, y - size]
+          ];
+          break;
+          
+        case 'east': // Points right (¡û)
+          points = [
+            [x, y],
+            [x - size, y - size],
+            [x - size, y + size]
+          ];
+          break;
+          
+        case 'west': // Points left (¡ú)
+          points = [
+            [x, y],
+            [x + size, y - size],
+            [x + size, y + size]
+          ];
+          break;
+          
+        default: // Default to south
+          points = [
+            [x, y],
+            [x - size, y - size],
+            [x + size, y - size]
+          ];
+      }
+      
+      console.log(`Arrow points: ${JSON.stringify(points)}`);
+      
+      const arrow = rc.polygon(points, {
+        stroke: '#1565c0',
+        strokeWidth: 1,
+        fill: '#1565c0',
+        fillStyle: 'solid',
+        roughness: 0.8
+      });
+      
+      svg.appendChild(arrow);
+      console.groupEnd();
+    }
+
+    function drawArrow(fromId, toId, options = {}) {
+      console.group(`Drawing arrow from ${fromId} to ${toId}`);
+      console.log('Options:', options);
+      
+      const from = document.getElementById(fromId);
+      const to = document.getElementById(toId);
+      const svg = document.getElementById("arrows");
+
+      const fromRect = from.getBoundingClientRect();
+      const toRect = to.getBoundingClientRect();
+      const containerRect = svg.parentElement.getBoundingClientRect();
+
+      let x1, y1, x2, y2;
+      let arrowDirection = 'south';
+
+      if (options.fromLeftSide) {
+        console.log('Drawing left-side arrow (right direction)');
+        // Horizontal arrow from left side to right
+        x1 = fromRect.right - containerRect.left;
+        y1 = fromRect.top - containerRect.top + fromRect.height/2;
+        x2 = toRect.left - containerRect.left;
+        y2 = toRect.top - containerRect.top + toRect.height/2;
+        arrowDirection = 'east';
+      } else if (options.fromRightToLeftDownTurn) {
+        console.log('Drawing L-shaped arrow (right to left with downward turn)');
+        // L-shaped arrow (right to left with downward turn)
+        x1 = fromRect.left - containerRect.left + fromRect.width/2;
+        y1 = fromRect.bottom - containerRect.top;
+        x2 = toRect.left - containerRect.left + toRect.width + 10;
+        y2 = toRect.top - containerRect.top + toRect.height/2;
+        
+        const midX = x1;
+        const midY = y2;
+        
+        console.log(`Line segments: (${x1},${y1}) -> (${midX},${midY}) -> (${x2},${y2})`);
+        
+        // Draw the two segments
+        const line1 = rc.line(x1, y1, midX, midY, {
+          stroke: '#1565c0',
+          strokeWidth: 2,
+          roughness: 1
+        });
+        const line2 = rc.line(midX, midY, x2, y2, {
+          stroke: '#1565c0',
+          strokeWidth: 2,
+          roughness: 1
+        });
+        svg.appendChild(line1);
+        svg.appendChild(line2);
+        
+        // Draw arrowhead pointing left
+        drawArrowhead(x2, y2, 'west');
+        console.groupEnd();
+        return;
+      } else {
+        // Standard vertical arrow
+        x1 = fromRect.left - containerRect.left + fromRect.width/2;
+        y1 = fromRect.bottom - containerRect.top;
+        x2 = toRect.left - containerRect.left + toRect.width/2;
+        y2 = toRect.top - containerRect.top;
+        
+        // Determine if this is a right or left branch
+        const xDiff = Math.abs(x1 - x2);
+        if (xDiff > 20) { // Significant horizontal movement
+          arrowDirection = x1 < x2 ? 'east' : 'west';
+          console.log(`Significant horizontal movement (${xDiff}px), direction: ${arrowDirection}`);
+        } else {
+          arrowDirection = 'south';
+          console.log('Vertical movement, direction: south');
+        }
+      }
+
+      console.log(`Drawing line from (${x1},${y1}) to (${x2},${y2}) with ${arrowDirection} arrow`);
+      
+      const line = rc.line(x1, y1, x2, y2, {
+        stroke: '#1565c0',
+        strokeWidth: 2,
+        roughness: 1
+      });
+      svg.appendChild(line);
+      
+      // Draw arrowhead with proper direction
+      drawArrowhead(x2, y2, arrowDirection);
+      console.groupEnd();
+    }
+
+    function drawAllElements() {
+      console.group('Drawing all flowchart elements');
+      const svg = document.getElementById("arrows");
+      svg.innerHTML = '';
+
+      // Draw boxes
+      drawBox("fetch", { fill: '#bbdefb', stroke: '#1565c0' });
+      drawBox("returnRow");
+      drawBox("increment", { fill: '#bbdefb', stroke: '#1565c0' });
+      drawBox("writeRow", { fill: '#bbdefb', stroke: '#1565c0' });
+      drawBox("updateMem");
+      drawBox("writeRedo");
+      drawBox("writeBinlog", { fill: '#bbdefb', stroke: '#1565c0' }); // New box
+      drawBox("commit");
+      drawBox("loadDisk");
+
+      // Draw diamond
+      drawDiamond("inMemory");
+
+      // Draw arrows with proper directions
+      drawArrow("fetch", "inMemory"); // Down
+      drawArrow("inMemory", "returnRow"); // Down
+      drawArrow("inMemory", "loadDisk", { fromLeftSide: true }); // left to Right 
+      drawArrow("loadDisk", "returnRow", { fromRightToLeftDownTurn: true }); // L-shape
+      drawArrow("returnRow", "increment"); // Down
+      drawArrow("increment", "writeRow"); // Down
+      drawArrow("writeRow", "updateMem"); // Down
+      drawArrow("updateMem", "writeRedo"); // Down
+      drawArrow("writeRedo", "writeBinlog"); // New arrow
+      drawArrow("writeBinlog", "commit"); // New arrow
+      
+      console.groupEnd();
+    }
+
+    window.addEventListener("load", () => {
+      console.log('Initializing flowchart...');
+      drawAllElements();
+    });
+    window.addEventListener("resize", () => {
+      console.log('Resizing flowchart...');
+      drawAllElements();
+    });
+  </script>
+</body>
+</html>
