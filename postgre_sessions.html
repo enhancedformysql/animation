@@ -143,18 +143,18 @@
         <div class="sql-steps">
         
           <div class="sql-step">
-            <div class="sql-command">CREATE TABLE t (id SERIAL PRIMARY KEY, k INT NOT NULL);</div>
+            <div class="sql-command">CREATE TABLE test (id SERIAL PRIMARY KEY, k INT NOT NULL);</div>
           </div>
 
           <div class="sql-step">
-            <div class="sql-command">insert into t(id, k) values(1,1),(2,2);</div>
+            <div class="sql-command">insert into test(id, k) values(1,1),(2,2),(3,3);</div>
           </div>
           
           <div class="sql-step">
             <div class="sql-command">BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;</div>
           </div>
           <div class="sql-step">
-            <div class="sql-command">select k from t where id=1;</div>
+            <div class="sql-command">select k from test where id=1;</div>
           </div>
           <div class="sql-step">
             <div class="sql-command"></div>
@@ -166,7 +166,7 @@
             <div class="sql-command"></div>
           </div>
           <div class="sql-step">
-            <div class="sql-command">select k from t where id=1;</div>
+            <div class="sql-command"></div>
           </div>
           <div class="sql-step">
             <div class="sql-command"></div>
@@ -194,7 +194,7 @@
             <div class="sql-command"></div>
           </div>
           <div class="sql-step">
-            <div class="sql-command">update t set k=k+1 where id=1; // Execute 1 million times</div>
+            <div class="sql-command">update test set k=k+1 where id=1; // Execute 1 million times</div>
           </div>
           <div class="sql-step">
             <div class="sql-command"></div>
