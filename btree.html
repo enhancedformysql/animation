@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>B+ Tree Visualization</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leader-line/1.0.7/leader-line.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #fdfdfd;
+      padding: 20px;
+    }
+
+    .tree-container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-bottom: 120px;
+    }
+
+    .tree {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .label {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .node-container {
+      display: inline-flex;
+      border: 2px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60px;
+      font-size: 18px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    .box:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0%;
+      height: 100%;
+      width: 1px;
+      background-color: #444;
+    }
+
+    .box:last-child {
+      border-right: none;
+    }
+
+    .pointer {
+      width: 30px;
+      background-color: #f0f0f0;
+      color: #888;
+    }
+
+    .key {
+      width: 70px;
+      background-color: #d0f4ff;
+      color: #333;
+    }
+
+    .level {
+      display: flex;
+      justify-content: center;
+      margin: 60px 0 20px;
+      flex-wrap: wrap;
+      gap: 40px;
+    }
+
+    .leaf-node-group {
+      display: flex;
+      gap: 0px;
+    }
+
+    .leaf-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .leaf-key {
+      width: 80px;
+      height: 40px;
+      background-color: #d0f4ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    .leaf-key::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: #444;
+    }
+
+    .leaf-record {
+      width: 80px;
+      height: 40px;
+      background-color: #e8f5e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="tree-container">
+    <!-- Left Tree -->
+    <div class="tree" id="tree-id">
+      <div class="label">ID</div>
+      <div class="level" id="id-root">
+        <div class="node-container" id="id-top-node">
+          <div class="box pointer" id="id-p0"></div>
+          <div class="box key" id="id-node-300">300</div>
+          <div class="box pointer" id="id-p1"></div>
+          <div class="box key" id="id-node-700">700</div>
+          <div class="box pointer" id="id-p2"></div>
+        </div>
+      </div>
+      <div class="level" id="id-leaf">
+        <div class="leaf-node-group">
+          <div class="leaf-node" id="id-100">
+            <div class="leaf-key">100</div>
+            <div class="leaf-record">R1</div>
+          </div>
+          <div class="leaf-node" id="id-200">
+            <div class="leaf-key">200</div>
+            <div class="leaf-record">R2</div>
+          </div>
+        </div>
+
+        <div class="leaf-node-group">
+        	<div class="leaf-node" id="id-300">
+            <div class="leaf-key">300</div>
+            <div class="leaf-record">R3</div>
+          </div>
+          <div class="leaf-node" id="id-500">
+            <div class="leaf-key">500</div>
+            <div class="leaf-record">R4</div>
+          </div>
+          <div class="leaf-node" id="id-600">
+            <div class="leaf-key">600</div>
+            <div class="leaf-record">R5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Tree -->
+    <div class="tree" id="tree-k">
+      <div class="label">k</div>
+      <div class="level" id="k-root">
+        <div class="node-container" id="k-top-node">
+          <div class="box pointer" id="k-p0"></div>
+          <div class="box key" id="k-node-3">3</div>
+          <div class="box pointer" id="k-p1"></div>
+          <div class="box key" id="k-node-7">7</div>
+          <div class="box pointer" id="k-p2"></div>
+        </div>
+      </div>
+      <div class="level" id="k-leaf">
+        <div class="leaf-node-group">
+          <div class="leaf-node" id="k-1">
+            <div class="leaf-key">1</div>
+            <div class="leaf-record">100</div>
+          </div>
+          <div class="leaf-node" id="k-2">
+            <div class="leaf-key">2</div>
+            <div class="leaf-record">200</div>
+          </div>
+        </div>
+
+        <div class="leaf-node-group">
+        	<div class="leaf-node" id="k-3">
+            <div class="leaf-key">3</div>
+            <div class="leaf-record">300</div>
+          </div>
+          <div class="leaf-node" id="k-5">
+            <div class="leaf-key">5</div>
+            <div class="leaf-record">500</div>
+          </div>
+          <div class="leaf-node" id="k-6">
+            <div class="leaf-key">6</div>
+            <div class="leaf-record">600</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function connect(from, to) {
+      new LeaderLine(
+        document.getElementById(from),
+        LeaderLine.pointAnchor(document.getElementById(to), { x: '50%', y: 0 }),
+        {
+          color: '#66bb6a',
+          size: 2,
+          startPlug: 'disc',
+          endPlug: 'arrow3',
+          path: 'straight',
+          animOptions: { duration: 1500, timing: 'ease' }
+        }
+      );
+    }
+
+    // ID tree: only point to 100, 300, 500
+    connect('id-p0', 'id-100');
+    connect('id-p1', 'id-300');
+
+
+    // k tree: only point to 1, 3
+    connect('k-p0', 'k-1');
+    connect('k-p1', 'k-3');
+
+  </script>
+</body>
+</html>
