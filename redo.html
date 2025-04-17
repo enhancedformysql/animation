@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Redo Log Mechanism</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .animation-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 30px 0;
+        }
+        .memory-section, .disk-section {
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #ecf0f1;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        .buffer-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .buffer-page {
+            width: 60px;
+            height: 60px;
+            background-color: #fff;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .buffer-page.dirty {
+            background-color: #f9e79f;
+            border-color: #f1c40f;
+        }
+        .buffer-page.flushing {
+            animation: flushAnimation 1s ease-out;
+        }
+        .redo-log {
+            width: 100%;
+            height: 120px;
+            background-color: #e8f8f5;
+            border: 2px solid #1abc9c;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .log-record {
+            position: absolute;
+            width: 80px;
+            height: 30px;
+            background-color: #a3e4d7;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            transition: all 0.5s ease;
+        }
+        .log-record::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 10px solid #a3e4d7;
+        }
+        .disk-pages {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .disk-page {
+            width: 60px;
+            height: 60px;
+            background-color: #fff;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            transition: all 0.5s ease;
+        }
+        .disk-page.updating {
+            background-color: #d5f5e3;
+            border-color: #2ecc71;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eaf2f8;
+            border-radius: 8px;
+        }
+        @keyframes flushAnimation {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .arrow {
+            width: 2px;
+            height: 30px;
+            background-color: #3498db;
+            margin: 5px auto;
+            position: relative;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: -4px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #3498db;
+        }
+        .log-pointer {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            background-color: #e74c3c;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Database Redo Log Mechanism</h1>
+        
+        <div class="animation-area">
+            <div class="memory-section">
+                <div class="section-title">Buffer Pool (In-Memory)</div>
+                <div class="buffer-pool" id="bufferPool">
+                    <!-- Buffer pages will be added by JavaScript -->
+                </div>
+                
+                <div class="section-title">Redo Log Buffer</div>
+                <div class="redo-log" id="redoLog">
+                    <div class="log-pointer" id="logPointer">LSN</div>
+                    <!-- Log records will be added by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <div class="disk-section">
+                <div class="section-title">Disk Storage</div>
+                <div class="disk-pages" id="diskPages">
+                    <!-- Disk pages will be added by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="btnModify">Modify Page</button>
+            <button id="btnCommit">Commit Transaction</button>
+            <button id="btnCrash">Simulate Crash</button>
+            <button id="btnRecover">Recovery</button>
+            <button id="btnReset">Reset</button>
+        </div>
+        
+        <div class="explanation" id="explanation">
+            <h3>How Redo Logs Work:</h3>
+            <p><strong>1. Normal Operation:</strong> When data is modified, changes are first made to in-memory buffer pages and corresponding redo records are written to the log buffer.</p>
+            <p><strong>2. Commit:</strong> On commit, log records are flushed to disk (persistent redo log file) while data pages may remain in memory.</p>
+            <p><strong>3. Crash Recovery:</strong> After a crash, the database replays the redo log to reconstruct all committed changes that weren't yet written to data files.</p>
+            <p><strong>Key Benefit:</strong> Redo logs allow the database to guarantee durability without requiring immediate writes to data files.</p>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let bufferPages = [];
+        let diskPages = [];
+        let logRecords = [];
+        let currentLSN = 1;
+        let transactionActive = false;
+        let lastFlushedLSN = 0;
+        
+        // DOM elements
+        const bufferPoolEl = document.getElementById('bufferPool');
+        const diskPagesEl = document.getElementById('diskPages');
+        const redoLogEl = document.getElementById('redoLog');
+        const logPointerEl = document.getElementById('logPointer');
+        const explanationEl = document.getElementById('explanation');
+        
+        // Initialize the visualization
+        function initialize() {
+            // Create buffer pages
+            bufferPages = [];
+            bufferPoolEl.innerHTML = '';
+            for (let i = 1; i <= 6; i++) {
+                const page = { id: i, data: `Page ${i}`, dirty: false, inMemory: true };
+                bufferPages.push(page);
+                
+                const pageEl = document.createElement('div');
+                pageEl.className = 'buffer-page';
+                pageEl.textContent = `Page ${i}`;
+                pageEl.dataset.id = i;
+                bufferPoolEl.appendChild(pageEl);
+            }
+            
+            // Create disk pages
+            diskPages = [];
+            diskPagesEl.innerHTML = '';
+            for (let i = 1; i <= 6; i++) {
+                const page = { id: i, data: `Page ${i}` };
+                diskPages.push(page);
+                
+                const pageEl = document.createElement('div');
+                pageEl.className = 'disk-page';
+                pageEl.textContent = `Page ${i}`;
+                pageEl.dataset.id = i;
+                diskPagesEl.appendChild(pageEl);
+            }
+            
+            // Initialize redo log
+            logRecords = [];
+            redoLogEl.querySelectorAll('.log-record').forEach(el => el.remove());
+            currentLSN = 1;
+            lastFlushedLSN = 0;
+            logPointerEl.textContent = `LSN ${currentLSN}`;
+            transactionActive = false;
+            
+            updateExplanation('normal');
+        }
+        
+        // Modify a random page
+        function modifyPage() {
+            if (!transactionActive) {
+                transactionActive = true;
+                updateExplanation('modify');
+            }
+            
+            // Select a random page to modify
+            const randomIndex = Math.floor(Math.random() * bufferPages.length);
+            const page = bufferPages[randomIndex];
+            page.dirty = true;
+            page.data = `Page ${page.id}*`; // Asterisk indicates modified
+            
+            // Update buffer pool display
+            const bufferPageEl = bufferPoolEl.querySelector(`[data-id="${page.id}"]`);
+            bufferPageEl.textContent = page.data;
+            bufferPageEl.classList.add('dirty');
+            
+            // Create a log record
+            const logRecord = {
+                lsn: currentLSN,
+                pageId: page.id,
+                oldData: `Page ${page.id}`,
+                newData: page.data,
+                flushed: false
+            };
+            logRecords.push(logRecord);
+            currentLSN++;
+            logPointerEl.textContent = `LSN ${currentLSN}`;
+            
+            // Add log record to visualization
+            const logRecordEl = document.createElement('div');
+            logRecordEl.className = 'log-record';
+            logRecordEl.textContent = `LSN ${logRecord.lsn}`;
+            logRecordEl.style.bottom = '10px';
+            logRecordEl.style.left = `${10 + (logRecords.length - 1) * 90}px`;
+            logRecordEl.dataset.lsn = logRecord.lsn;
+            redoLogEl.appendChild(logRecordEl);
+            
+            // Animate the modification
+            bufferPageEl.classList.add('flushing');
+            setTimeout(() => {
+                bufferPageEl.classList.remove('flushing');
+            }, 1000);
+        }
+        
+        // Commit the transaction
+        function commitTransaction() {
+            if (!transactionActive || logRecords.length === 0) return;
+            
+            transactionActive = false;
+            updateExplanation('commit');
+            
+            // Flush log records to disk (simulated)
+            logRecords.forEach(record => {
+                record.flushed = true;
+                const logRecordEl = redoLogEl.querySelector(`[data-lsn="${record.lsn}"]`);
+                if (logRecordEl) {
+                    logRecordEl.style.backgroundColor = '#76d7c4';
+                }
+            });
+            lastFlushedLSN = currentLSN - 1;
+            
+            // Eventually the dirty pages would be flushed to disk, but not immediately
+            // This is the key benefit of redo logs - durability without immediate data file writes
+        }
+        
+        // Simulate a crash
+        function simulateCrash() {
+            updateExplanation('crash');
+            
+            // Clear the buffer pool (memory is volatile)
+            bufferPages.forEach(page => {
+                page.inMemory = false;
+                const bufferPageEl = bufferPoolEl.querySelector(`[data-id="${page.id}"]`);
+                if (bufferPageEl) {
+                    bufferPageEl.style.opacity = '0.3';
+                }
+            });
+            
+            // Show which operations would be lost without redo log
+            setTimeout(() => {
+                alert("CRASH! All in-memory changes lost. But committed transactions can be recovered from redo log.");
+            }, 500);
+        }
+        
+        // Recovery process
+        function recovery() {
+            updateExplanation('recovery');
+            
+            // Step 1: Redo pass - replay all committed changes
+            logRecords.filter(record => record.flushed).forEach(record => {
+                // Find the disk page
+                const diskPage = diskPages.find(p => p.id === record.pageId);
+                if (diskPage) {
+                    diskPage.data = record.newData;
+                    
+                    // Update disk display
+                    const diskPageEl = diskPagesEl.querySelector(`[data-id="${diskPage.id}"]`);
+                    if (diskPageEl) {
+                        diskPageEl.textContent = diskPage.data;
+                        diskPageEl.classList.add('updating');
+                        
+                        setTimeout(() => {
+                            diskPageEl.classList.remove('updating');
+                        }, 1000);
+                    }
+                }
+            });
+            
+            // Step 2: Rebuild buffer pool
+            bufferPages.forEach(page => {
+                page.inMemory = true;
+                const bufferPageEl = bufferPoolEl.querySelector(`[data-id="${page.id}"]`);
+                if (bufferPageEl) {
+                    bufferPageEl.style.opacity = '1';
+                    
+                    // Find the most recent version in the log
+                    const lastRecord = [...logRecords]
+                        .reverse()
+                        .find(r => r.pageId === page.id && r.flushed);
+                    
+                    if (lastRecord) {
+                        page.data = lastRecord.newData;
+                        bufferPageEl.textContent = page.data;
+                    } else {
+                        page.data = `Page ${page.id}`;
+                        bufferPageEl.textContent = page.data;
+                    }
+                    
+                    page.dirty = false;
+                    bufferPageEl.classList.remove('dirty');
+                }
+            });
+            
+            setTimeout(() => {
+                alert("Recovery complete! All committed changes have been restored.");
+            }, 1000);
+        }
+        
+        // Update the explanation text
+        function updateExplanation(stage) {
+            let html = '';
+            
+            switch(stage) {
+                case 'normal':
+                    html = `
+                        <h3>Redo Log Mechanism Overview</h3>
+                        <p><strong>Initial State:</strong> Data pages exist both in memory (buffer pool) and on disk.</p>
+                        <p>Click "Modify Page" to simulate changes to data pages.</p>
+                    `;
+                    break;
+                    
+                case 'modify':
+                    html = `
+                        <h3>Modification Phase</h3>
+                        <p><strong>What's happening:</strong></p>
+                        <ol>
+                            <li>Page is modified in buffer pool (marked dirty)</li>
+                            <li>Redo log record is created in log buffer</li>
+                            <li>Log Sequence Number (LSN) increments</li>
+                        </ol>
+                        <p><strong>Key point:</strong> Changes are made to memory first, with redo log as backup.</p>
+                    `;
+                    break;
+                    
+                case 'commit':
+                    html = `
+                        <h3>Commit Operation</h3>
+                        <p><strong>What's happening:</strong></p>
+                        <ol>
+                            <li>Log records are flushed to disk (redo log file)</li>
+                            <li>Transaction is considered durable once log is written</li>
+                            <li>Data pages may still be in memory (delayed write)</li>
+                        </ol>
+                        <p><strong>Key benefit:</strong> Durability is guaranteed without immediate data file writes.</p>
+                    `;
+                    break;
+                    
+                case 'crash':
+                    html = `
+                        <h3>Crash Simulation</h3>
+                        <p><strong>What happened:</strong></p>
+                        <ol>
+                            <li>System crashed - all memory content lost</li>
+                            <li>Some committed changes weren't written to data files</li>
+                            <li>But all committed changes were recorded in redo log</li>
+                        </ol>
+                        <p>Click "Recovery" to see how the database recovers.</p>
+                    `;
+                    break;
+                    
+                case 'recovery':
+                    html = `
+                        <h3>Recovery Process</h3>
+                        <p><strong>What's happening:</strong></p>
+                        <ol>
+                            <li>Database reads the redo log during startup</li>
+                            <li>All committed operations are reapplied (redo pass)</li>
+                            <li>Database returns to consistent state with all committed changes</li>
+                        </ol>
+                        <p><strong>Result:</strong> No committed work is lost despite the crash.</p>
+                    `;
+                    break;
+            }
+            
+            explanationEl.innerHTML = html;
+        }
+        
+        // Event listeners
+        document.getElementById('btnModify').addEventListener('click', modifyPage);
+        document.getElementById('btnCommit').addEventListener('click', commitTransaction);
+        document.getElementById('btnCrash').addEventListener('click', simulateCrash);
+        document.getElementById('btnRecover').addEventListener('click', recovery);
+        document.getElementById('btnReset').addEventListener('click', initialize);
+        
+        // Initialize the animation
+        initialize();
+    </script>
+</body>
+</html>

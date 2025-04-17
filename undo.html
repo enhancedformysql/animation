@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Undo Mechanism with Rollback Segments</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .version-chain {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            position: relative;
+            height: 250px;
+            align-items: center;
+        }
+        .version {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 5px;
+            background-color: #f8f9fa;
+            position: relative;
+            transition: all 0.5s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+        .version.current {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .version.undo {
+            background-color: #e8f5e9; /* Light green for undo versions */
+            border-color: #66bb6a;
+        }
+        .version.highlight {
+            background-color: #ffeaa7;
+            transform: scale(1.1);
+        }
+        .version .value {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-align: center;
+            padding: 0 5px;
+        }
+        .version .trxId {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .arrow {
+            width: 20px;
+            height: 2px;
+            background-color: #3498db;
+            position: relative;
+            margin: 0 -2px;
+            z-index: 1;
+        }
+        .arrow:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid #3498db;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        .read-view {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f1f1f1;
+            width: 100%;
+            text-align: center;
+        }
+        .read-view.highlight {
+            background-color: #d4edda;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 0 5px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 5px;
+        }
+        .rollback-segment {
+            border: 2px dashed #66bb6a;
+            border-radius: 10px;
+            padding: 15px 10px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            background-color: #f8fff8;
+        }
+        .segment-label {
+            position: absolute;
+            top: -15px;
+            left: 10px;
+            background: white;
+            padding: 0 5px;
+            font-size: 12px;
+            color: #66bb6a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Database Undo Mechanism with Rollback Segments</h1>
+        
+        <div class="explanation">
+            <p>This visualization demonstrates the undo mechanism using <strong>rollback segments</strong> and version chains.</p>
+            <p>Key components:
+                <ul>
+                    <li><strong>Current Value</strong> (green box): The most recent committed version</li>
+                    <li><strong>Rollback Segments</strong> (dashed areas): Groups of older versions used for undo operations</li>
+                    <li><strong>Version Arrows</strong>: Point from newer to older versions in the chain</li>
+                </ul>
+            </p>
+        </div>
+        
+        <div class="version-chain" id="versionChain">
+            <!-- Versions will be inserted here by JavaScript -->
+        </div>
+        
+        <div class="controls">
+            <button id="btnReadView1">Read View (trxId=1)</button>
+            <button id="btnReadView2">Read View (trxId=2)</button>
+            <button id="btnReadView4">Read View (trxId=4)</button>
+            <button id="btnReset">Reset Animation</button>
+        </div>
+        
+        <div class="read-view" id="readViewResult">
+            Click a button above to simulate a read view
+        </div>
+        
+        <div class="explanation">
+            <h3>Rollback Segment Mechanics:</h3>
+            <p>1. <strong>Current Version</strong>: The active, committed data visible to new transactions</p>
+            <p>2. <strong>Rollback Segments</strong>: Contain previous versions needed for:
+                <ul>
+                    <li>Transaction rollback</li>
+                    <li>Consistent reads for older transactions</li>
+                    <li>Crash recovery</li>
+                </ul>
+            </p>
+            <p>3. <strong>Version Pointers</strong>: Each version points to its immediate predecessor in the undo chain</p>
+        </div>
+    </div>
+
+    <script>
+        // Define the Version class
+        class Version {
+            constructor(value, prev = null, trxId) {
+                this.value = value;     // Current value
+                this.prev = prev;       // Pointer to previous version
+                this.trxId = trxId;     // Transaction ID that created this version
+            }
+        }
+
+        // Create the version chain
+        const v1 = new Version("Value = 1", null, 1);
+        const v2 = new Version("Value = 2", v1, 2);
+        const v3 = new Version("Value = 3", v2, 3);
+        const current = new Version("Current Value = 4", v3, 4);
+
+        // Function to render the version chain with rollback segments
+        function renderVersionChain(highlightedVersion = null) {
+            const versionChainElement = document.getElementById('versionChain');
+            versionChainElement.innerHTML = '';
+            
+            // Create current version segment
+            const currentSegment = document.createElement('div');
+            currentSegment.className = 'version current';
+            currentSegment.innerHTML = `
+                <div class="value">${current.value}</div>
+                <div class="trxId">trxId: ${current.trxId}</div>
+            `;
+            if (current === highlightedVersion) {
+                currentSegment.classList.add('highlight');
+            }
+            versionChainElement.appendChild(currentSegment);
+            
+            // Create rollback segment container
+            const rollbackSegment = document.createElement('div');
+            rollbackSegment.className = 'rollback-segment';
+            
+            const segmentLabel = document.createElement('div');
+            segmentLabel.className = 'segment-label';
+            segmentLabel.textContent = 'Rollback Segment';
+            rollbackSegment.appendChild(segmentLabel);
+            
+            // Add versions to rollback segment in reverse order (newest to oldest)
+            let version = current.prev;
+            while (version) {
+                const versionElement = document.createElement('div');
+                versionElement.className = 'version undo';
+                if (version === highlightedVersion) {
+                    versionElement.classList.add('highlight');
+                }
+                
+                versionElement.innerHTML = `
+                    <div class="value">${version.value}</div>
+                    <div class="trxId">trxId: ${version.trxId}</div>
+                `;
+                
+                // Add arrow before each version (except first in segment)
+                if (version !== current.prev) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'arrow';
+                    rollbackSegment.appendChild(arrow);
+                }
+                
+                rollbackSegment.appendChild(versionElement);
+                version = version.prev;
+            }
+            
+            // Add arrow between current and rollback segment
+            const mainArrow = document.createElement('div');
+            mainArrow.className = 'arrow';
+            versionChainElement.appendChild(mainArrow);
+            
+            versionChainElement.appendChild(rollbackSegment);
+        }
+
+        // Function to simulate read view
+        function readView(readTrxId, latestVersion) {
+            let version = latestVersion;
+            
+            // Traverse the chain to find the appropriate version
+            while (version && version.trxId > readTrxId) {
+                version = version.prev;
+            }
+            
+            return version;
+        }
+
+        // Function to animate the read view process
+        function animateReadView(readTrxId) {
+            const resultElement = document.getElementById('readViewResult');
+            resultElement.textContent = `Processing Read View for transaction ${readTrxId}...`;
+            resultElement.className = 'read-view';
+            
+            let currentVersion = current;
+            let steps = 0;
+            const maxSteps = 4; // Maximum steps in our chain
+            
+            const interval = setInterval(() => {
+                renderVersionChain(currentVersion);
+                
+                if (!currentVersion || currentVersion.trxId <= readTrxId || steps >= maxSteps) {
+                    clearInterval(interval);
+                    
+                    const finalVersion = readView(readTrxId, current);
+                    if (finalVersion) {
+                        resultElement.textContent = `Read View (trxId=${readTrxId}) sees: "${finalVersion.value}" (created by trxId=${finalVersion.trxId})`;
+                    } else {
+                        resultElement.textContent = `Read View (trxId=${readTrxId}) sees no valid version`;
+                    }
+                    resultElement.classList.add('highlight');
+                    
+                    // Highlight the final version
+                    renderVersionChain(finalVersion);
+                } else {
+                    currentVersion = currentVersion.prev;
+                    steps++;
+                }
+            }, 800);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            renderVersionChain();
+            
+            // Set up button event handlers
+            document.getElementById('btnReadView1').addEventListener('click', () => {
+                animateReadView(1);
+            });
+            
+            document.getElementById('btnReadView2').addEventListener('click', () => {
+                animateReadView(2);
+            });
+            
+            document.getElementById('btnReadView4').addEventListener('click', () => {
+                animateReadView(4);
+            });
+            
+            document.getElementById('btnReset').addEventListener('click', () => {
+                renderVersionChain();
+                document.getElementById('readViewResult').textContent = 'Click a button above to simulate a read view';
+                document.getElementById('readViewResult').className = 'read-view';
+            });
+        });
+    </script>
+</body>
+</html>

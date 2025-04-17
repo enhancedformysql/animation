@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SQL Execution Flow - Static Diagram</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 40px;
+    }
+    .box {
+      position: absolute;
+      width: 250px;
+      height: 80px;
+      padding: 12px;
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      border-radius: 15px;
+      text-align: center;
+    }
+
+    .box1 {
+      position: absolute;
+      width: 250px;
+      height: 200px;
+      padding: 12px;
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      border-radius: 15px;
+      text-align: center;
+    }
+    
+    .box2 {
+      position: absolute;
+      width: 250px;
+      height: 150px;
+      padding: 12px;
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      border-radius: 15px;
+      text-align: center;
+    }    
+    .label {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #065f46;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 4px 6px;
+      background-color: white;
+    }
+    th {
+      background-color: #f3f4f6;
+    }
+    .arrow-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1000px;
+      height: 800px;
+      pointer-events: none;
+    }
+    .id-box {
+      background-color: #10b981;
+      color: white;
+      padding: 4px 0;
+      margin: 4px auto;
+      border-radius: 4px;
+      width: 60px;
+    }
+    .id-right {
+      position: absolute;
+      width: 60px;
+      background-color: #10b981;
+      color: white;
+      padding: 4px 0;
+      text-align: center;
+      border-radius: 4px;
+    }
+    .large-arrow {
+      stroke: white;
+      stroke-width: 1;
+      filter: drop-shadow(0 0 1px #10b981);
+    }
+    .large-arrow-outline {
+      stroke: #10b981;
+      stroke-width: 1;
+      stroke-linecap: round;
+    }
+  </style>
+</head>
+<body>
+
+  <h2 style="text-align:center; margin-bottom: 30px;">SQL Execution Flow</h2>
+
+  <div id="diagram">
+    <div class="box" id="box1" style="top: 150px; left: 50px">
+      <div class="label">City Index</div>
+      <div>city = 'Hangzhou'</div>
+    </div>
+    <div class="id-right" style="top: 160px; left: 250px;">ID: 1</div>
+    <div class="id-right" style="top: 190px; left: 250px;">ID: 3</div>
+    <div class="id-right" style="top: 220px; left: 250px;">ID: 4</div>
+
+    <div class="box1" id="box2" style="top: 100px; left: 370px">
+      <div class="label">Fetch from Primary Table</div>
+      <table>
+        <tr><th>ID</th><th>Name</th><th>City</th><th>Age</th></tr>
+        <tr><td>1</td><td></td><td></td><td></td></tr>
+        <tr><td>2</td><td></td><td></td><td></td></tr>
+        <tr><td>...</td><td></td><td></td><td></td></tr>
+        <tr><td>n</td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="box2" id="box3" style="top: 120px; left: 750px">
+      <div class="label">Sort Buffer (Unordered)</div>
+      <table>
+        <tr><th>Name</th><th>Age</th></tr>
+        <tr><td>David</td><td>28</td></tr>
+        <tr><td>Charlie</td><td>35</td></tr>
+        <tr><td>Alice</td><td>30</td></tr>
+      </table>
+      <div style="margin-top: 5px; font-style: italic; color: gray;">Not yet sorted by name</div>
+    </div>
+
+    <div class="box2" id="box4" style="top: 400px; left: 370px">
+      <div class="label">Sort by Name</div>
+      <table>
+        <tr><th>Name</th><th>Age</th></tr>
+        <tr><td>Alice</td><td>30</td></tr>
+        <tr><td>Charlie</td><td>35</td></tr>
+        <tr><td>David</td><td>28</td></tr>
+      </table>
+      <div style="margin-top: 5px; font-style: italic; color: gray;">Sorted by name</div>
+    </div>
+
+    <div class="box2" id="box5" style="top: 400px; left: 750px">
+      <div class="label">Final Result Set</div>
+      <table>
+        <tr><th>Name</th><th>Age</th></tr>
+        <tr><td>Alice</td><td>30</td></tr>
+        <tr><td>Charlie</td><td>35</td></tr>
+        <tr><td>David</td><td>28</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <svg class="arrow-line">
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
+      </marker>
+      <marker id="large-arrowhead" markerWidth="18" markerHeight="12" refX="18" refY="6" orient="auto">
+        <polygon points="0 1, 18 6, 0 11" fill="white" stroke="#10b981" stroke-width="1.5" />
+      </marker>
+    </defs>
+    
+    <!-- Small green arrows from index to primary table -->
+    <line x1="300" y1="175" x2="350" y2="175" stroke="#10b981" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+    <line x1="300" y1="205" x2="350" y2="205" stroke="#10b981" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+    <line x1="300" y1="235" x2="350" y2="235" stroke="#10b981" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+
+
+    <line x1="650" y1="200" x2="750" y2="200" class="large-arrow-outline" />
+    <line x1="650" y1="200" x2="750" y2="200" class="large-arrow" marker-end="url(#large-arrowhead)" />
+    <text x="700" y="190" font-family="Arial" font-size="14" fill="#065f46" text-anchor="middle">Fetch Data</text>
+
+
+    <line x1="250" y1="500" x2="350" y2="500" class="large-arrow-outline" />
+    <line x1="250" y1="500" x2="350" y2="500" class="large-arrow" marker-end="url(#large-arrowhead)" />
+    <text x="300" y="490" font-family="Arial" font-size="14" fill="#065f46" text-anchor="middle">Sort BY Name</text>
+
+
+    <line x1="650" y1="500" x2="750" y2="500" class="large-arrow-outline" />
+    <line x1="650" y1="500" x2="750" y2="500" class="large-arrow" marker-end="url(#large-arrowhead)" />
+    <text x="700" y="490" font-family="Arial" font-size="14" fill="#065f46" text-anchor="middle">Return Result</text>
+
+
+  </svg>
+
+</body>
+</html>
