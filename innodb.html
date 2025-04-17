@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>InnoDB Change Buffer Visualization</title>
+</head>
+<body>
+<svg width="1000" height="600" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .box {
+      fill: #d0f0c0; /* light green */
+      stroke: #336633;
+      stroke-width: 2;
+      rx: 15;
+      ry: 15;
+    }
+    .sub-box {
+      fill: #f0fff0;
+      stroke: #336633;
+      stroke-width: 1.5;
+    }
+    .text {
+      font-size: 16px;
+      font-family: Arial;
+      font-weight: bold;
+      fill: #003300;
+    }
+    .content {
+      font-size: 14px;
+      font-family: Courier New;
+      fill: #003300;
+    }
+    .arrow {
+      stroke: #336633;
+      stroke-width: 1.5;
+      stroke-dasharray: 5,3;
+      marker-end: url(#arrowhead);
+    }
+    .divider {
+      stroke: #336633;
+      stroke-width: 2;
+    }
+    .content-box {
+      fill: #f0fff0;
+      stroke: none;
+    }
+    
+    .dotted-box {
+      fill: #f0fff0;
+      stroke: #336633;
+      stroke-width: 1.5;
+      stroke-dasharray: 5,3;
+    }
+    .ellipsis-box {
+      fill: #f0fff0;
+      stroke: #336633;
+      stroke-width: 1;
+      rx: 10;
+      ry: 10;
+    }
+  </style>
+
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#336633"/>
+    </marker>
+  </defs>
+
+  <!-- InnoDB buffer pool -->
+  <rect x="50" y="40" width="520" height="200" class="box"/>
+  <text x="60" y="70" class="text">InnoDB Buffer Pool</text>
+
+  <!-- Page 1 in buffer pool - modified with dividers -->
+  <rect x="350" y="90" width="200" height="80" class="sub-box"/>
+  <text x="360" y="115" class="content">Page 1</text>
+  <!-- Horizontal divider line -->
+  <line x1="350" y1="130" x2="550" y2="130" class="divider"/>
+  
+  <!-- Content sections with vertical dividers -->
+  <rect x="350" y="130" width="66" height="40" class="content-box"/>
+  <text x="365" y="150" class="content">(a,b)</text>
+  <line x1="416" y1="130" x2="416" y2="170" class="divider"/>
+  
+  <rect x="416" y="130" width="66" height="40" class="content-box"/>
+  <text x="416" y="150" class="content">(id1,k1)</text>
+  <line x1="482" y1="130" x2="482" y2="170" class="divider"/>
+  
+  <rect x="482" y="130" width="68" height="40" class="content-box"/>
+  <text x="497" y="150" class="content">(c,d)</text>
+
+  <!-- Change buffer container -->
+  <rect x="60" y="90" width="250" height="100" class="sub-box"/>
+  <text x="70" y="110" class="content">Change Buffer</text>
+
+  <!-- Change buffer entry (nested box) -->
+  <rect x="70" y="125" width="220" height="40" class="sub-box"/>
+  <text x="80" y="150" class="content">"add (id2,k2) to Page 2"</text>
+
+  <!-- Redo log -->
+  <rect x="600" y="40" width="300" height="150" class="box"/>
+  <text x="610" y="70" class="text">Redo Log (ib_logfileX)</text>
+
+  <!-- Redo log entry 1 -->
+  <rect x="610" y="90" width="230" height="30" class="sub-box"/>
+  <text x="620" y="110" class="content">"add (id1,k1) to Page 1"</text>
+
+  <!-- Redo log entry 2 -->
+  <rect x="610" y="125" width="230" height="50" class="sub-box"/>
+  <text x="620" y="150" class="content">New change buffer item</text>
+  <text x="620" y="170" class="content">"add (id2,k2) to Page 2"</text>
+
+  <!-- System tablespace -->
+  <rect x="50" y="270" width="250" height="120" class="box"/>
+  <text x="60" y="300" class="text">System Tablespace (ibdata1)</text>
+
+  <!-- Change buffer in system tablespace -->
+  <rect x="60" y="320" width="230" height="60" class="sub-box"/>
+  <text x="70" y="335" class="content">Change Buffer</text>
+  <rect x="70" y="352" width="210" height="25" class="dotted-box"/>
+  <text x="70" y="370" class="content">"add (id2,k2) to Page 2"</text>
+
+  <!-- Data file -->
+  <rect x="350" y="270" width="500" height="120" class="box"/>
+  <text x="360" y="300" class="text">Data(t.ibd)</text>
+
+  <!-- Page 1 in file - modified with dividers -->
+  <rect x="360" y="320" width="160" height="60" class="sub-box"/>
+  <text x="370" y="340" class="content">Page 1</text>
+  <!-- Horizontal divider line -->
+  <line x1="360" y1="350" x2="520" y2="350" class="divider"/>
+  
+  <!-- Content sections with vertical dividers -->
+  <rect x="360" y="350" width="80" height="30" class="content-box"/>
+  <text x="375" y="370" class="content">(a,b)</text>
+  <line x1="440" y1="350" x2="440" y2="380" class="divider"/>
+  
+  <rect x="440" y="350" width="80" height="30" class="content-box"/>
+  <text x="455" y="370" class="content">(c,d)</text>
+  
+  <!-- Horizontal divider line -->
+  <line x1="360" y1="350" x2="520" y2="350" class="divider"/>
+ 
+  <!-- Page x in file - modified with dividers -->
+  <rect x="530" y="320" width="90" height="60" class="sub-box"/>
+  <text x="540" y="350" class="content">...</text> 
+  
+  <!-- Page n in file - modified with dividers -->
+  <rect x="630" y="320" width="160" height="60" class="sub-box"/>
+  <text x="640" y="340" class="content">Page n</text>
+  <!-- Horizontal divider line -->
+  <line x1="630" y1="350" x2="790" y2="350" class="divider"/>
+  
+  <!-- Content sections with vertical dividers -->
+  <rect x="630" y="350" width="80" height="30" class="content-box"/>
+  <text x="645" y="370" class="content">(e,f)</text>
+  <line x1="710" y1="350" x2="710" y2="380" class="divider"/>
+  
+  <rect x="710" y="350" width="80" height="30" class="content-box"/>
+  <text x="725" y="370" class="content">(g,h)</text>
+
+  <!-- Arrows (now dashed) -->
+  <line x1="170" y1="190" x2="170" y2="270" class="arrow"/>
+  <line x1="370" y1="170" x2="370" y2="270" class="arrow"/>
+</svg>
+</body>
+</html>
