@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hash Join Algorithm Visualization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 40px;
+    }
+    .container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .table-container {
+      width: 45%;
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      border-radius: 15px;
+      padding: 15px;
+    }
+    .hash-table {
+      width: 100%;
+      background: #f0fdf4;
+      border: 2px solid #22c55e;
+      border-radius: 15px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .result-table {
+      width: 100%;
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      border-radius: 15px;
+      padding: 15px;
+    }
+    h2 {
+      color: #065f46;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f3f4f6;
+    }
+    .arrow {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+    }
+    .highlight {
+      background-color: #fef08a;
+    }
+    .hash-key {
+      background-color: #dbeafe;
+    }
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    button {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 0 10px;
+    }
+    button:hover {
+      background-color: #059669;
+    }
+  </style>
+</head>
+<body>
+  <h2>Hash Join Algorithm Visualization</h2>
+
+  <div class="container">
+    <div class="table-container">
+      <h3>Table R (Build Phase)</h3>
+      <table id="tableR">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>DeptID</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Alice</td>
+            <td class="hash-key">101</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Bob</td>
+            <td class="hash-key">102</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Charlie</td>
+            <td class="hash-key">101</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-container">
+      <h3>Table S (Probe Phase)</h3>
+      <table id="tableS">
+        <thead>
+          <tr>
+            <th>DeptID</th>
+            <th>DeptName</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hash-key">101</td>
+            <td>Engineering</td>
+          </tr>
+          <tr>
+            <td class="hash-key">102</td>
+            <td>Marketing</td>
+          </tr>
+          <tr>
+            <td class="hash-key">103</td>
+            <td>Finance</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div class="hash-table">
+    <h3>Hash Table</h3>
+    <table id="hashTable">
+      <thead>
+        <tr>
+          <th>Hash Key</th>
+          <th>Values</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Will be populated by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="arrow">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div class="result-table">
+    <h3>Join Result (R join S on DeptID)</h3>
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>DeptID</th>
+          <th>DeptName</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Will be populated by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="controls">
+    <button id="buildBtn">Build Hash Table</button>
+    <button id="probeBtn">Probe Phase</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <script>
+    const tableR = [
+      { id: 1, name: 'Alice', deptId: 101 },
+      { id: 2, name: 'Bob', deptId: 102 },
+      { id: 3, name: 'Charlie', deptId: 101 }
+    ];
+
+    const tableS = [
+      { deptId: 101, deptName: 'Engineering' },
+      { deptId: 102, deptName: 'Marketing' },
+      { deptId: 103, deptName: 'Finance' }
+    ];
+
+    let hashTable = {};
+    let result = [];
+
+    const buildBtn = document.getElementById('buildBtn');
+    const probeBtn = document.getElementById('probeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const hashTableBody = document.querySelector('#hashTable tbody');
+    const resultTableBody = document.querySelector('#resultTable tbody');
+
+    function buildHashTable() {
+      hashTable = {};
+
+      const rowsR = document.querySelectorAll('#tableR tbody tr');
+      rowsR.forEach((row, index) => {
+        setTimeout(() => {
+          row.classList.add('highlight');
+
+          const deptId = tableR[index].deptId;
+          if (!hashTable[deptId]) {
+            hashTable[deptId] = [];
+          }
+          hashTable[deptId].push(tableR[index]);
+
+          updateHashTableDisplay();
+        }, index * 1000);
+      });
+
+      setTimeout(() => {
+        probeBtn.disabled = false;
+      }, tableR.length * 1000);
+    }
+
+    function updateHashTableDisplay() {
+      hashTableBody.innerHTML = '';
+
+      for (const key in hashTable) {
+        const row = document.createElement('tr');
+
+        const keyCell = document.createElement('td');
+        keyCell.textContent = key;
+        keyCell.classList.add('hash-key');
+        row.appendChild(keyCell);
+
+        const valuesCell = document.createElement('td');
+        const values = hashTable[key].map(item => `${item.name} (ID:${item.id})`).join(', ');
+        valuesCell.textContent = values;
+        row.appendChild(valuesCell);
+
+        hashTableBody.appendChild(row);
+      }
+    }
+
+    function probePhase() {
+      result = [];
+
+      const rowsS = document.querySelectorAll('#tableS tbody tr');
+      rowsS.forEach((row, index) => {
+        setTimeout(() => {
+          row.classList.add('highlight');
+
+          const deptId = tableS[index].deptId;
+          if (hashTable[deptId]) {
+            hashTable[deptId].forEach(item => {
+              result.push({
+                id: item.id,
+                name: item.name,
+                deptId: deptId,
+                deptName: tableS[index].deptName
+              });
+            });
+          }
+
+          updateResultTableDisplay();
+        }, index * 1000);
+      });
+    }
+
+    function updateResultTableDisplay() {
+      resultTableBody.innerHTML = '';
+
+      result.forEach(item => {
+        const row = document.createElement('tr');
+
+        const idCell = document.createElement('td');
+        idCell.textContent = item.id;
+        row.appendChild(idCell);
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = item.name;
+        row.appendChild(nameCell);
+
+        const deptIdCell = document.createElement('td');
+        deptIdCell.textContent = item.deptId;
+        deptIdCell.classList.add('hash-key');
+        row.appendChild(deptIdCell);
+
+        const deptNameCell = document.createElement('td');
+        deptNameCell.textContent = item.deptName;
+        row.appendChild(deptNameCell);
+
+        resultTableBody.appendChild(row);
+      });
+    }
+
+    function reset() {
+      hashTable = {};
+      result = [];
+
+      document.querySelectorAll('.highlight').forEach(el => {
+        el.classList.remove('highlight');
+      });
+
+      hashTableBody.innerHTML = '';
+      resultTableBody.innerHTML = '';
+
+      probeBtn.disabled = true;
+    }
+
+    buildBtn.addEventListener('click', buildHashTable);
+    probeBtn.addEventListener('click', probePhase);
+    resetBtn.addEventListener('click', reset);
+
+    probeBtn.disabled = true;
+  </script>
+</body>
+</html>
