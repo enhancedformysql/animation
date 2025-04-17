@@ -71,7 +71,7 @@
 
     .key {
       width: 70px;
-      background-color: #90ee90;
+      background-color: white;
       color: #333;
     }
 
@@ -103,7 +103,7 @@
     .leaf-key {
       width: 80px;
       height: 40px;
-      background-color: #90ee90;
+      background-color: white;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -125,11 +125,17 @@
     .leaf-record {
       width: 80px;
       height: 40px;
-      background-color: green;
+      background-color: #006400; /* dark green */
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 14px;
+      color: white;
+    }
+
+    .leaf-record.alt {
+      background-color: #90ee90; /* light green */
+      color: black;
     }
   </style>
 </head>
@@ -155,18 +161,18 @@
           </div>
           <div class="leaf-node" id="id-200">
             <div class="leaf-key">200</div>
-            <div class="leaf-record">R2</div>
+            <div class="leaf-record alt">R2</div>
           </div>
         </div>
 
         <div class="leaf-node-group">
-        	<div class="leaf-node" id="id-300">
+          <div class="leaf-node" id="id-300">
             <div class="leaf-key">300</div>
             <div class="leaf-record">R3</div>
           </div>
           <div class="leaf-node" id="id-500">
             <div class="leaf-key">500</div>
-            <div class="leaf-record">R4</div>
+            <div class="leaf-record alt">R4</div>
           </div>
           <div class="leaf-node" id="id-600">
             <div class="leaf-key">600</div>
@@ -196,18 +202,18 @@
           </div>
           <div class="leaf-node" id="k-2">
             <div class="leaf-key">2</div>
-            <div class="leaf-record">200</div>
+            <div class="leaf-record alt">200</div>
           </div>
         </div>
 
         <div class="leaf-node-group">
-        	<div class="leaf-node" id="k-3">
+          <div class="leaf-node" id="k-3">
             <div class="leaf-key">3</div>
             <div class="leaf-record">300</div>
           </div>
           <div class="leaf-node" id="k-5">
             <div class="leaf-key">5</div>
-            <div class="leaf-record">500</div>
+            <div class="leaf-record alt">500</div>
           </div>
           <div class="leaf-node" id="k-6">
             <div class="leaf-key">6</div>
@@ -234,15 +240,13 @@
       );
     }
 
-    // ID tree: only point to 100, 300, 500
+    // ID tree connections
     connect('id-p0', 'id-100');
     connect('id-p1', 'id-300');
 
-
-    // k tree: only point to 1, 3
+    // k tree connections
     connect('k-p0', 'k-1');
     connect('k-p1', 'k-3');
-
   </script>
 </body>
 </html>

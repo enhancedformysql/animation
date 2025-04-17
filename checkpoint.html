@@ -65,18 +65,18 @@
 <div class="control-panel">
   <div class="slider-container">
     <label for="baseSpeedSlider">Base Write Speed:</label>
-    <input type="range" id="baseSpeedSlider" min="0.001" max="0.1" step="0.001" value="0.03">
-    <span class="value-display" id="baseSpeedValue">0.030</span>
+    <input type="range" id="baseSpeedSlider" min="0.001" max="0.05" step="0.001" value="0.015">
+    <span class="value-display" id="baseSpeedValue">0.015</span>
   </div>
   <div class="slider-container">
     <label for="variationSlider">Speed Variation:</label>
-    <input type="range" id="variationSlider" min="0" max="0.2" step="0.001" value="0.05">
-    <span class="value-display" id="variationValue">0.050</span>
+    <input type="range" id="variationSlider" min="0" max="0.1" step="0.001" value="0.03">
+    <span class="value-display" id="variationValue">0.030</span>
   </div>
   <div class="slider-container">
     <label for="checkpointSlider">Checkpoint Speed:</label>
-    <input type="range" id="checkpointSlider" min="0.001" max="0.1" step="0.001" value="0.02">
-    <span class="value-display" id="checkpointValue">0.020</span>
+    <input type="range" id="checkpointSlider" min="0.001" max="0.05" step="0.001" value="0.01">
+    <span class="value-display" id="checkpointValue">0.010</span>
   </div>
   <div class="checkbox-container">
     <input type="checkbox" id="randomSpeedCheckbox" checked>
@@ -91,15 +91,15 @@ const ctx = canvas.getContext("2d");
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 const radius = 180;
-const logFiles = ["ib_logfile0", "ib_logfile1", "ib_logfile2"];
+const logFiles = ["ib_logfile0", "ib_logfile1", "ib_logfile2", "ib_logfile3"];
 const segments = logFiles.length;
 
 // Pointer states
 let writePos = Math.PI * 1.5;
 let checkpoint = Math.PI * 1.0;
-let baseWriteSpeed = 0.02;
+let baseWriteSpeed = 0.015;
 let currentWriteSpeed = baseWriteSpeed;
-let speedVariation = 0.02;
+let speedVariation = 0.03;
 let checkpointSpeed = 0.02;
 const minGap = Math.PI / 20;
 const warningGap = Math.PI / 10;
