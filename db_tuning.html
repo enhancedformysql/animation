@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Database Performance Tuning Case Study</title>
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --accent: #4895ef;
+      --dark: #1b263b;
+      --light: #f8f9fa;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--dark);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: var(--secondary);
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+      width: 80%;
+      max-width: 700px;
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .step:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    .step-icon {
+      font-size: 28px;
+      font-weight: bold;
+      margin-right: 20px;
+      color: white;
+      background: var(--primary);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-content {
+      flex-grow: 1;
+    }
+    .step-title {
+      font-size: 1.5rem;
+      color: var(--secondary);
+      margin-bottom: 15px;
+    }
+    .step-content pre {
+      background: #2d3748;
+      color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      line-height: 1.5;
+      margin: 10px 0;
+    }
+    .step-content p {
+      line-height: 1.6;
+      margin: 10px 0;
+    }
+    svg.arrow {
+      height: 40px;
+      width: 24px;
+      margin: -10px 0;
+      opacity: 0.7;
+    }
+    .results {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      width: 80%;
+      max-width: 700px;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: var(--primary);
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #e9e9e9;
+    }
+    .before {
+      color: #e63946;
+      font-weight: bold;
+    }
+    .after {
+      color: #2a9d8f;
+      font-weight: bold;
+    }
+    .visual {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+    .bar {
+      width: 100px;
+      background: #e63946;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px 5px 0 0;
+      transition: height 1s, background 1s;
+    }
+    .bar.optimized {
+      background: #2a9d8f;
+    }
+    .callout {
+      background: #fff3cd;
+      border-left: 5px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 0 5px 5px 0;
+    }
+    .tip {
+      background: #d1e7dd;
+      border-left: 5px solid #198754;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 0 5px 5px 0;
+      font-size: 0.9rem;
+    }
+    .interactive {
+      background: #e2e3e5;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Database Performance Tuning Case Study</h1>
+    <p class="subtitle">From 12 Seconds to 200ms - A Performance Transformation</p>
+  </div>
+
+  <div class="step">
+    <div class="step-icon">1</div>
+    <div class="step-content">
+      <h2 class="step-title">Identifying the Slow Query</h2>
+      <p>Users of our e-commerce site were complaining about slow order page loads. Our monitoring tools revealed this problematic query:</p>
+      <pre>
+SELECT u.name, o.amount
+FROM orders o
+JOIN users u ON o.user_id = u.id
+WHERE o.status = 'paid'
+AND o.created_at > '2024-01-01';</pre>
+      <div class="callout">
+        <strong>Real-world Context:</strong> This query retrieves all paid orders since January 1, 2024 with customer information, but became painfully slow with millions of records.
+      </div>
+    </div>
+  </div>
+
+  <svg class="arrow" viewBox="0 0 24 40">
+    <path d="M12 0 C12 20, 12 20, 12 40" stroke="#888" stroke-width="2" fill="none"/>
+    <polygon points="8,35 12,40 16,35" fill="#888"/>
+  </svg>
+
+  <div class="step">
+    <div class="step-icon">2</div>
+    <div class="step-content">
+      <h2 class="step-title">Analyzing the Execution Plan</h2>
+      <p>Using EXPLAIN revealed the database was doing a full table scan on the orders table:</p>
+      <pre>
+EXPLAIN SELECT u.name, o.amount
+FROM orders o
+JOIN users u ON o.user_id = u.id
+WHERE o.status = 'paid'
+AND o.created_at > '2024-01-01';</pre>
+      <div class="interactive">
+        <p>Click to see sample EXPLAIN results:</p>
+        <button onclick="showExplain()">Show EXPLAIN Results</button>
+        <div id="explainResult" style="display:none; margin-top:10px;">
+          <pre>
++----+-------------+-------+------+---------------+------+---------+------+--------+-------------+
+| id | select_type | table | type | possible_keys | key  | key_len | ref  | rows   | Extra       |
++----+-------------+-------+------+---------------+------+---------+------+--------+-------------+
+|  1 | SIMPLE      | o     | ALL  | NULL          | NULL | NULL    | NULL | 987654 | Using where |
+|  1 | SIMPLE      | u     | ALL  | PRIMARY       | NULL | NULL    | NULL | 100000 | Using where |
++----+-------------+-------+------+---------------+------+---------+------+--------+-------------+</pre>
+          <div class="tip">
+            <strong>Key Insight:</strong> The "ALL" in the type column indicates full table scans, and the rows column shows nearly a million rows being examined.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <svg class="arrow" viewBox="0 0 24 40">
+    <path d="M12 0 C12 20, 12 20, 12 40" stroke="#888" stroke-width="2" fill="none"/>
+    <polygon points="8,35 12,40 16,35" fill="#888"/>
+  </svg>
+
+  <div class="step">
+    <div class="step-icon">3</div>
+    <div class="step-content">
+      <h2 class="step-title">Adding a Composite Index</h2>
+      <p>We created a composite index on the fields used in the WHERE clause:</p>
+      <pre>
+ALTER TABLE orders
+ADD INDEX idx_status_created_at (status, created_at);</pre>
+      <div class="tip">
+        <strong>Indexing Tip:</strong> The order of columns in a composite index matters. Put equality conditions first, followed by range conditions.
+      </div>
+      <div class="callout">
+        <strong>Why This Works:</strong> This index allows the database to quickly locate orders with a specific status, then filter by date within those orders, avoiding full table scans.
+      </div>
+    </div>
+  </div>
+
+  <svg class="arrow" viewBox="0 0 24 40">
+    <path d="M12 0 C12 20, 12 20, 12 40" stroke="#888" stroke-width="2" fill="none"/>
+    <polygon points="8,35 12,40 16,35" fill="#888"/>
+  </svg>
+
+  <div class="step">
+    <div class="step-icon">4</div>
+    <div class="step-content">
+      <h2 class="step-title">Caching Frequently Accessed Data</h2>
+      <p>For data accessed often but changing rarely, we implemented Redis caching:</p>
+      <pre>
+// Pseudocode example
+function getOrderDetails(orderId) {
+  let cachedData = redis.get('order:' + orderId);
+  if (cachedData) return cachedData;
+  
+  // Database query
+  let data = db.query("SELECT ...");
+  
+  // Cache results with 60-second expiration
+  redis.set('order:' + orderId, data, 60);
+  return data;
+}</pre>
+      <div class="tip">
+        <strong>Caching Strategy:</strong> Set appropriate expiration times based on data volatility - longer for hot data, shorter for frequently changing data.
+      </div>
+    </div>
+  </div>
+
+  <div class="results">
+    <h2 style="text-align: center; color: var(--secondary);">Optimization Results</h2>
+    <div class="visual">
+      <div>
+        <div class="bar" style="height: 120px;">12s</div>
+        <p>Before</p>
+      </div>
+      <div>
+        <div class="bar optimized" style="height: 20px;">200ms</div>
+        <p>After</p>
+      </div>
+    </div>
+    <table>
+      <tr>
+        <th>Stage</th>
+        <th>Query Time</th>
+        <th>Performance Gain</th>
+      </tr>
+      <tr>
+        <td>Original</td>
+        <td class="before">12 seconds</td>
+        <td>Baseline</td>
+      </tr>
+      <tr>
+        <td>After Indexing</td>
+        <td>1.2 seconds</td>
+        <td>10x faster</td>
+      </tr>
+      <tr>
+        <td>After Caching</td>
+        <td class="after">200 milliseconds</td>
+        <td>60x faster</td>
+      </tr>
+    </table>
+    <div class="callout" style="margin-top: 20px;">
+      <strong>Summary:</strong> With simple indexing and caching strategies, we improved query speed by 60x. User experience improved dramatically while server load decreased significantly.
+    </div>
+  </div>
+
+  <script>
+    function showExplain() {
+      const explainResult = document.getElementById('explainResult');
+      explainResult.style.display = explainResult.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    // Simple animation effect
+    document.addEventListener('DOMContentLoaded', function() {
+      const bars = document.querySelectorAll('.bar');
+      bars.forEach(bar => {
+        // Reset height for animation
+        const originalHeight = bar.style.height;
+        bar.style.height = '0px';
+        setTimeout(() => {
+          bar.style.height = originalHeight;
+        }, 100);
+      });
+    });
+  </script>
+
+</body>
+</html>

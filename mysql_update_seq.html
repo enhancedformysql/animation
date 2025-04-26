@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MySQL UPDATE Operation Sequence</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    .mermaid {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>MySQL UPDATE Operation - Sequence Diagram</h1>
+  <div class="mermaid">
+    sequenceDiagram
+        participant Client
+        participant Connector
+        participant Parser
+        participant PreProcessor
+        participant Optimizer
+        participant Executor
+        participant InnoDB
+        participant Binary Log
+        participant Disk
+
+        %% Phase 1: Connection & Command Reception
+        Client->>Connector: Send UPDATE command
+        Connector->>Connector: Parse network packet
+        Connector->>Connector: Identify command type: Query
+
+        %% Phase 2: Query Parsing & Preparation
+        Connector->>Parser: Parse SQL
+        Parser->>Parser: Parse SET and WHERE clauses
+        Parser->>PreProcessor: Check privileges
+        PreProcessor->>PreProcessor: Open table 't'
+
+        %% Phase 3: Optimization
+        PreProcessor->>Optimizer: Analyze query plans
+        Optimizer-->>Executor: Select primary key index (id=3)
+
+        %% Phase 4: Execution
+        Executor->>InnoDB: Start row-level lock
+        InnoDB->>InnoDB: Locate record id=3
+        InnoDB->>InnoDB: Read k=3, compute k=4
+        InnoDB->>InnoDB: Write undo log
+        InnoDB->>InnoDB: Update row data
+
+        %% Phase 5: Binary Logging
+        Executor->>Binary Log: Prepare binlog event
+        Binary Log->>Binary Log: Save before & after images
+
+        %% Phase 6: Two-Phase Commit (2PC)
+
+        Note over Executor,InnoDB: --- Prepare Phase ---
+        Executor->>InnoDB: Prepare transaction (redo log)
+        Executor->>InnoDB: Assign GTID: a9e1b31f-2190-11f0-8356-2cf05d25f3f8:5
+        Executor->>InnoDB: Write GTID event
+        Executor->>Binary Log: Flush binlog cache
+
+        Note over Executor,Disk: --- Sync Phase ---
+        Binary Log->>Disk: Sync binlog file to disk
+
+        Note over Executor,InnoDB: --- Commit Phase ---
+        Executor->>InnoDB: Commit InnoDB transaction (commit LSN 19429587)
+        InnoDB->>Disk: Flush changes to storage
+        Executor->>Binary Log: Update GTID state
+        Executor->>InnoDB: Release row locks
+
+        %% Phase 7: Cleanup
+        Executor->>Client: Respond (Matched: 1, Changed: 1)
+  </div>
+</body>
+</html>
+
+
+  

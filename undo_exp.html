@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Undo Log Explosion Visualization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      padding: 30px;
+      text-align: center;
+    }
+    h2 {
+      color: #1f2937;
+    }
+    .log-bar {
+      width: 80%;
+      height: 30px;
+      margin: 20px auto;
+      background: #e5e7eb;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .log-fill {
+      height: 100%;
+      background: #ef4444;
+      width: 0%;
+      transition: width 0.5s ease-in-out;
+    }
+    .status {
+      margin: 10px 0;
+      font-size: 18px;
+      color: #374151;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+  </style>
+</head>
+<body>
+  <h2>Undo Log Explosion: Long Transaction Simulation</h2>
+
+  <div class="status" id="status">Idle</div>
+
+  <div class="log-bar">
+    <div class="log-fill" id="logFill"></div>
+  </div>
+  <div>Undo Space Usage: <span id="logPercent">0%</span></div>
+
+  <div>
+    <button onclick="startTransaction()">Start Transaction</button>
+    <button onclick="simulateUpdate()">Update Rows</button>
+    <button onclick="commitTransaction()">Commit</button>
+    <button onclick="rollbackTransaction()">Rollback</button>
+  </div>
+
+  <script>
+    let logUsage = 0;
+    let interval = null;
+    const logFill = document.getElementById('logFill');
+    const logPercent = document.getElementById('logPercent');
+    const status = document.getElementById('status');
+
+    function updateLogUI() {
+      logFill.style.width = logUsage + '%';
+      logPercent.innerText = logUsage + '%';
+    }
+
+    function startTransaction() {
+      logUsage = 0;
+      updateLogUI();
+      status.innerText = 'Transaction Started';
+    }
+
+    function simulateUpdate() {
+      status.innerText = 'Updating rows (undo growing)...';
+      if (interval) clearInterval(interval);
+      interval = setInterval(() => {
+        if (logUsage >= 100) {
+          clearInterval(interval);
+          status.innerText = 'Undo Space Full!';
+          return;
+        }
+        logUsage += 5;
+        updateLogUI();
+      }, 300);
+    }
+
+    function commitTransaction() {
+      clearInterval(interval);
+      logUsage = 0;
+      updateLogUI();
+      status.innerText = 'Transaction Committed (Undo cleared)';
+    }
+
+    function rollbackTransaction() {
+      clearInterval(interval);
+      logUsage = 0;
+      updateLogUI();
+      status.innerText = 'Transaction Rolled Back (Undo cleared)';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Nested Loop Join Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .table-container {
+            width: 45%;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .result-container {
+            width: 100%;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: #ffeb3b;
+            transition: background-color 0.3s;
+        }
+        .matched {
+            background-color: #a5d6a7;
+            transition: background-color 0.3s;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .arrow {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background-color: red;
+            top: 50%;
+            left: 50%;
+            transform-origin: left center;
+            display: none;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid red;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        .explanation {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MySQL Nested Loop Join Visualization</h1>
+    
+    <div class="explanation">
+        <h3>How Nested Loop Join Works:</h3>
+        <ol>
+            <li>For each row in the <strong>outer table</strong> (driving table):</li>
+            <li>Scan through all rows in the <strong>inner table</strong> (driven table)</li>
+            <li>If the join condition matches, combine the rows and add to results</li>
+            <li>Repeat until all outer table rows are processed</li>
+        </ol>
+        <p><strong>Performance Note:</strong> This algorithm is O(M*N) where M and N are the table sizes. Indexes on join columns can optimize this.</p>
+    </div>
+    
+    <div class="controls">
+        <button id="startBtn">Start Animation</button>
+        <button id="resetBtn">Reset</button>
+        <button id="stepBtn">Step Through</button>
+        <div>
+            <label>Animation Speed: </label>
+            <input type="range" id="speedSlider" min="100" max="2000" value="500">
+            <span id="speedValue">500ms</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="table-container" id="outerTableContainer">
+            <h3>Outer Table (Driving Table) - Employees</h3>
+            <table id="outerTable">
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>name</th>
+                        <th>dept_id</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-id="1">
+                        <td>1</td>
+                        <td>Alice</td>
+                        <td>101</td>
+                    </tr>
+                    <tr data-id="2">
+                        <td>2</td>
+                        <td>Bob</td>
+                        <td>102</td>
+                    </tr>
+                    <tr data-id="3">
+                        <td>3</td>
+                        <td>Charlie</td>
+                        <td>101</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="table-container" id="innerTableContainer">
+            <h3>Inner Table (Driven Table) - Departments</h3>
+            <table id="innerTable">
+                <thead>
+                    <tr>
+                        <th>dept_id</th>
+                        <th>dept_name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-id="101">
+                        <td>101</td>
+                        <td>Engineering</td>
+                    </tr>
+                    <tr data-id="102">
+                        <td>102</td>
+                        <td>Marketing</td>
+                    </tr>
+                    <tr data-id="103">
+                        <td>103</td>
+                        <td>Finance</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="result-container">
+        <h3>Join Result (employees JOIN departments ON dept_id)</h3>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>emp_id</th>
+                    <th>emp_name</th>
+                    <th>dept_id</th>
+                    <th>dept_name</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <div class="arrow" id="arrow"></div>
+    
+    <script>
+        const outerTable = document.getElementById('outerTable');
+        const innerTable = document.getElementById('innerTable');
+        const resultTable = document.getElementById('resultTable').querySelector('tbody');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const arrow = document.getElementById('arrow');
+        
+        let outerRows = Array.from(outerTable.querySelectorAll('tbody tr'));
+        let innerRows = Array.from(innerTable.querySelectorAll('tbody tr'));
+        let currentOuterIndex = 0;
+        let currentInnerIndex = 0;
+        let isRunning = false;
+        let animationInterval;
+        let speed = 500;
+        
+        speedSlider.addEventListener('input', function() {
+            speed = parseInt(this.value);
+            speedValue.textContent = speed + 'ms';
+            if (isRunning) {
+                clearInterval(animationInterval);
+                startAnimation();
+            }
+        });
+        
+        startBtn.addEventListener('click', function() {
+            if (!isRunning) {
+                startAnimation();
+            } else {
+                pauseAnimation();
+            }
+        });
+        
+        resetBtn.addEventListener('click', resetAnimation);
+        stepBtn.addEventListener('click', stepAnimation);
+        
+        function startAnimation() {
+            isRunning = true;
+            startBtn.textContent = 'Pause';
+            animationInterval = setInterval(stepAnimation, speed);
+        }
+        
+        function pauseAnimation() {
+            isRunning = false;
+            startBtn.textContent = 'Resume';
+            clearInterval(animationInterval);
+        }
+        
+        function resetAnimation() {
+            pauseAnimation();
+            
+            // Reset highlights
+            outerRows.forEach(row => row.classList.remove('highlight'));
+            innerRows.forEach(row => row.classList.remove('matched', 'highlight'));
+            
+            // Clear result table
+            resultTable.innerHTML = '';
+            
+            // Reset pointers
+            currentOuterIndex = 0;
+            currentInnerIndex = 0;
+            
+            // Hide arrow
+            arrow.style.display = 'none';
+        }
+        
+        function stepAnimation() {
+            // Clear previous highlights
+            outerRows.forEach(row => row.classList.remove('highlight'));
+            innerRows.forEach(row => row.classList.remove('matched', 'highlight'));
+            
+            // If we've processed all outer rows, finish
+            if (currentOuterIndex >= outerRows.length) {
+                pauseAnimation();
+                return;
+            }
+            
+            // Highlight current outer row
+            const currentOuterRow = outerRows[currentOuterIndex];
+            currentOuterRow.classList.add('highlight');
+            
+            // Show arrow from outer to inner table
+            const outerRect = currentOuterRow.getBoundingClientRect();
+            const innerContainerRect = document.getElementById('innerTableContainer').getBoundingClientRect();
+            
+            arrow.style.display = 'block';
+            arrow.style.left = (outerRect.right + 10) + 'px';
+            arrow.style.top = (outerRect.top + outerRect.height / 2) + 'px';
+            arrow.style.width = (innerContainerRect.left - outerRect.right - 20) + 'px';
+            
+            // Get outer row's dept_id
+            const outerDeptId = currentOuterRow.querySelector('td:nth-child(3)').textContent;
+            
+            // If we've scanned all inner rows, move to next outer row
+            if (currentInnerIndex >= innerRows.length) {
+                currentOuterIndex++;
+                currentInnerIndex = 0;
+                return;
+            }
+            
+            // Highlight current inner row
+            const currentInnerRow = innerRows[currentInnerIndex];
+            currentInnerRow.classList.add('highlight');
+            
+            // Get inner row's dept_id
+            const innerDeptId = currentInnerRow.querySelector('td:first-child').textContent;
+            
+            // Check for match
+            if (outerDeptId === innerDeptId) {
+                currentInnerRow.classList.add('matched');
+                
+                // Add to result table
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${currentOuterRow.querySelector('td:nth-child(1)').textContent}</td>
+                    <td>${currentOuterRow.querySelector('td:nth-child(2)').textContent}</td>
+                    <td>${outerDeptId}</td>
+                    <td>${currentInnerRow.querySelector('td:nth-child(2)').textContent}</td>
+                `;
+                resultTable.appendChild(newRow);
+            }
+            
+            // Move to next inner row
+            currentInnerIndex++;
+            
+            // If we've finished scanning inner table, move to next outer row
+            if (currentInnerIndex >= innerRows.length) {
+                setTimeout(() => {
+                    currentOuterIndex++;
+                    currentInnerIndex = 0;
+                }, speed / 2);
+            }
+        }
+        
+        // Initialize
+        resetAnimation();
+    </script>
+</body>
+</html>

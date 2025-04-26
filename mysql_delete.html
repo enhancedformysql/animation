@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MySQL UPDATE</title>
+  <title>MySQL DELETE Operation Flow</title>
   <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
   <style>
     body {
@@ -139,48 +139,51 @@
   </style>
 </head>
 <body>
-  <h1>MySQL UPDATE</h1>
+  <h1>MySQL DELETE Operation Flow</h1>
   <div class="flowchart" id="flowchart">
 
+    <!-- Phase 1: Query Processing -->
     <div class="flow-step" id="step1">
-      <div class="node" id="receiveCmd">Receive UPDATE command</div>
+      <div class="node" id="receiveCmd">Receive DELETE command</div>
     </div>
     <div class="flow-step" id="step2">
       <div class="node" id="parseQuery">Parse SQL query</div>
     </div>
     <div class="flow-step" id="step3">
-      <div class="node" id="checkPrivileges">Check privileges</div>
+      <div class="node" id="checkPrivileges">Check user privileges</div>
     </div>
     <div class="flow-step" id="step4">
       <div class="decision" id="optimizePlan">
-        <div class="decision-content">Optimization</div>
-        <div class="decision-label yes">PK Scan</div>
+        <div class="decision-content">Query Optimization</div>
+        <div class="decision-label yes">Index Scan</div>
         <div class="decision-label no">Full Scan</div>
       </div>
       <div class="branch right" id="fullScan">Full Table Scan</div>
     </div>
 
+    <!-- Phase 2: InnoDB Execution -->
     <div class="flow-step" id="step5">
       <div class="node" id="acquireLocks">Acquire row locks</div>
     </div>
     <div class="flow-step" id="step6">
-      <div class="node" id="readRow">Read current row</div>
+      <div class="node" id="locateRow">Locate row via index</div>
     </div>
     <div class="flow-step" id="step7">
-      <div class="node" id="prepareUpdate">Prepare new values</div>
+      <div class="node" id="markDeleted">Mark row as deleted</div>
     </div>
     <div class="flow-step" id="step8">
-      <div class="node" id="writeUndo">Write undo log</div>
+      <div class="node" id="writeUndo">Write undo log record</div>
     </div>
     <div class="flow-step" id="step9">
-      <div class="node" id="updateInMemory">Update in-memory data</div>
+      <div class="node" id="updateStats">Update InnoDB statistics</div>
     </div>
     <div class="flow-step" id="step10">
-      <div class="node" id="writeRedo">Write redo log (prepare)</div>
+      <div class="node" id="prepareRedo">Prepare redo log</div>
     </div>
 
+    <!-- Phase 3: Binary Logging -->
     <div class="flow-step" id="step11">
-      <div class="node" id="prepareBinlog">Prepare binlog</div>
+      <div class="node" id="prepareBinlog">Prepare binlog event</div>
     </div>
     <div class="flow-step" id="step12">
       <div class="node" id="syncBinlog">Sync binlog to disk</div>
@@ -189,11 +192,12 @@
       <div class="node" id="commitRedo">Commit redo log</div>
     </div>
 
+    <!-- Phase 4: Cleanup -->
     <div class="flow-step" id="step14">
-      <div class="node" id="releaseLocks">Release locks</div>
+      <div class="node" id="releaseLocks">Release row locks</div>
     </div>
     <div class="flow-step" id="step15">
-      <div class="node" id="sendResponse">Send response</div>
+      <div class="node" id="sendResponse">Send response to client</div>
     </div>
 
     <svg id="arrows"></svg>
@@ -384,24 +388,33 @@
       const svg = document.getElementById("arrows");
       svg.innerHTML = '';
 
-      // Draw boxes
+      // Draw boxes for query processing
       drawBox("receiveCmd", { fill: '#e8f5e9', stroke: '#2e7d32' });
       drawBox("parseQuery", { fill: '#e8f5e9', stroke: '#2e7d32' });
       drawBox("checkPrivileges", { fill: '#e8f5e9', stroke: '#2e7d32' });
-      drawBox("acquireLocks",{ fill: 'green', stroke: '#2e7d32' });
-      drawBox("readRow",{ fill: 'green', stroke: '#2e7d32' });
-      drawBox("prepareUpdate", { fill: 'green', stroke: '#2e7d32' });
+      
+      // Draw boxes for InnoDB execution
+      drawBox("acquireLocks", { fill: '#c8e6c9', stroke: '#2e7d32' });
+      drawBox("locateRow", { fill: 'green', stroke: '#2e7d32' });
+      drawBox("markDeleted", { fill: 'green', stroke: '#2e7d32' });
       drawBox("writeUndo", { fill: 'green', stroke: '#2e7d32' });
-      drawBox("updateInMemory", { fill: 'green', stroke: '#2e7d32' });
-      drawBox("writeRedo", { fill: 'green', stroke: '#2e7d32' });
+      drawBox("updateStats", { fill: 'green', stroke: '#2e7d32' });
+      drawBox("prepareRedo", { fill: 'green', stroke: '#2e7d32' });
+      
+      // Draw boxes for binary logging
       drawBox("prepareBinlog", { fill: '#e8f5e9', stroke: '#2e7d32' });
       drawBox("syncBinlog", { fill: '#e8f5e9', stroke: '#2e7d32' });
       drawBox("commitRedo", { fill: 'green', stroke: '#2e7d32' });
+      
+      // Draw boxes for cleanup
       drawBox("releaseLocks", { fill: 'green', stroke: '#2e7d32' });
-      drawBox("sendResponse", { fill: '#c8e6c9', stroke: '#2e7d32' });
+      drawBox("sendResponse", { fill: '#e8f5e9', stroke: '#2e7d32' });
       drawBox("fullScan");
 
-      // Draw diamond
+
+
+
+      // Draw diamond for decision point
       drawDiamond("optimizePlan");
 
       // Draw arrows
@@ -410,12 +423,12 @@
       drawArrow("checkPrivileges", "optimizePlan");
       drawArrow("optimizePlan", "acquireLocks");
       drawArrow("optimizePlan", "fullScan", { fromLeftSide: true });
-      drawArrow("acquireLocks", "readRow");
-      drawArrow("readRow", "prepareUpdate");
-      drawArrow("prepareUpdate", "writeUndo");
-      drawArrow("writeUndo", "updateInMemory");
-      drawArrow("updateInMemory", "writeRedo");
-      drawArrow("writeRedo", "prepareBinlog");
+      drawArrow("acquireLocks", "locateRow");
+      drawArrow("locateRow", "markDeleted");
+      drawArrow("markDeleted", "writeUndo");
+      drawArrow("writeUndo", "updateStats");
+      drawArrow("updateStats", "prepareRedo");
+      drawArrow("prepareRedo", "prepareBinlog");
       drawArrow("prepareBinlog", "syncBinlog");
       drawArrow("syncBinlog", "commitRedo");
       drawArrow("commitRedo", "releaseLocks");
